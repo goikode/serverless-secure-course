@@ -250,42 +250,17 @@ Marca cada item cuando lo hayas completado:
 
 ### **Comando de Verificación Completa**
 ```bash
-# Ejecutar este script para verificar todo de una vez
-cat << 'EOF' > ~/verify-setup.sh
-#!/bin/bash
-echo "=== VERIFICACIÓN DE CONFIGURACIÓN MÓDULO 0 ==="
-echo
-echo "1. Identidad AWS:"
-aws sts get-caller-identity --query 'Arn' --output text
-echo
-echo "2. Región configurada:"
-aws configure get region
-echo
-echo "3. Servicios accesibles:"
-echo "  - Lambda functions: $(aws lambda list-functions --query 'length(Functions)' --output text)"
-echo "  - API Gateway APIs: $(aws apigateway get-rest-apis --query 'length(items)' --output text)"
-echo "  - DynamoDB tables: $(aws dynamodb list-tables --query 'length(TableNames)' --output text)"
-echo
-echo "4. Repositorio del curso:"
-if [ -d ~/serverless-secure-course ]; then
-    echo "  ✅ Repositorio clonado correctamente"
-else
-    echo "  ❌ Repositorio NO encontrado"
-fi
-echo
-echo "5. Espacio de trabajo:"
-if [ -d ~/mi-workspace-ssc ]; then
-    echo "  ✅ Workspace creado correctamente"
-else
-    echo "  ❌ Workspace NO encontrado"
-fi
-echo
-echo "=== VERIFICACIÓN COMPLETADA ==="
-EOF
-
-chmod +x ~/verify-setup.sh
-~/verify-setup.sh
+# Ejecutar el script de verificación incluido en el repositorio
+cd ~/serverless-secure-course
+./scripts/test-modulo-0.sh
 ```
+
+Este script verificará automáticamente:
+- ✅ Herramientas disponibles (AWS CLI, Git, Curl)
+- ✅ Configuración AWS CLI
+- ✅ Acceso a servicios AWS (Lambda, DynamoDB, API Gateway)
+- ✅ Estructura del repositorio
+- ✅ Configuración de región AWS
 
 ---
 
