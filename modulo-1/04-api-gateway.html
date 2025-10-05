@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 Api Gateway - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">04 Api Gateway</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="iteracion-4-exponer-con-api-gateway">Iteración 4: Exponer con API Gateway</h1>
+<h2 id="crear-una-api-rest-publica">Crear una API REST Pública</h2>
+<hr />
+<h2 id="objetivo">🎯 Objetivo</h2>
+<p>Crear una API HTTP en API Gateway y conectarla con la función Lambda para exponer el catálogo de vinilos vía HTTP, permitiendo que cualquier cliente (curl, Postman, navegador, app móvil) pueda consumir la API.</p>
+<hr />
+<h2 id="conceptos-clave">📚 Conceptos Clave</h2>
+<h3 id="que-es-amazon-api-gateway">¿Qué es Amazon API Gateway?</h3>
+<p><strong>API Gateway</strong> es un servicio completamente gestionado para crear, publicar, mantener, monitorizar y securizar APIs:</p>
+<ul>
+<li>✅ <strong>Serverless</strong>: Sin servidores que aprovisionar</li>
+<li>✅ <strong>Escalado automático</strong>: De 0 a millones de peticiones</li>
+<li>✅ <strong>Múltiples integraciones</strong>: Lambda, HTTP endpoints, AWS services</li>
+<li>✅ <strong>Seguridad</strong>: API Keys, IAM, Cognito, Lambda Authorizers</li>
+<li>✅ <strong>Throttling</strong>: Control de rate limiting</li>
+<li>✅ <strong>CORS</strong>: Configuración automática</li>
+</ul>
+<h3 id="http-api-vs-rest-api">HTTP API vs REST API</h3>
+<table>
+<thead>
+<tr>
+<th>Característica</th>
+<th>HTTP API</th>
+<th>REST API</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Precio</strong></td>
+<td>Más barato (70% menos)</td>
+<td>Más caro</td>
+</tr>
+<tr>
+<td><strong>Latencia</strong></td>
+<td>Menor (~71ms)</td>
+<td>Mayor (~90ms)</td>
+</tr>
+<tr>
+<td><strong>Autorización</strong></td>
+<td>JWT, IAM, Lambda</td>
+<td>Todo lo anterior + API Keys</td>
+</tr>
+<tr>
+<td><strong>Request validation</strong></td>
+<td>No</td>
+<td>Sí</td>
+</tr>
+<tr>
+<td><strong>Caching</strong></td>
+<td>No</td>
+<td>Sí</td>
+</tr>
+<tr>
+<td><strong>Caso de uso</strong></td>
+<td>APIs modernas, microservicios</td>
+<td>APIs complejas, legacy</td>
+</tr>
+</tbody>
+</table>
+<p>💡 <strong>Para este curso usaremos HTTP API</strong> (más simple y económica).</p>
+<hr />
+<h2 id="parte-1-crear-http-api">🛠️ Parte 1: Crear HTTP API</h2>
+<h3 id="paso-1-navegar-a-api-gateway"><strong>Paso 1: Navegar a API Gateway</strong></h3>
+<ol>
+<li>En la consola AWS, busca <strong>"API Gateway"</strong></li>
+<li>Haz clic en <strong>"API Gateway"</strong> (servicio)</li>
+<li>Verás dos opciones: <strong>HTTP API</strong> y <strong>REST API</strong></li>
+</ol>
+<hr />
+<h3 id="paso-2-crear-http-api"><strong>Paso 2: Crear HTTP API</strong></h3>
+<ol>
+<li>En la sección <strong>HTTP API</strong>, haz clic en <strong>"Build"</strong></li>
+</ol>
+<h4 id="step-1-add-integrations"><strong>Step 1: Add integrations</strong></h4>
+<p>Esta pantalla te permite configurar la primera integración (Lambda).</p>
+<ol>
+<li>
+<p><strong>Integrations</strong>:<br />
+   - Selecciona <strong>"Lambda"</strong> en el dropdown<br />
+   - <strong>Lambda function</strong>: Busca y selecciona tu Lambda: <code>{prefijo}-get-vinilos</code><br />
+   - <strong>Version</strong>: 2.0 (por defecto)</p>
+</li>
+<li>
+<p><strong>API name</strong>:<br />
+   - <strong>API name</strong>: <code>{tu-prefijo}-vinilos-api</code></p>
+<ul>
+<li>Ejemplo: <code>juan-perez-vinilos-api</code></li>
+</ul>
+</li>
+<li>
+<p>Haz clic en <strong>"Next"</strong></p>
+</li>
+</ol>
+<h4 id="step-2-configure-routes"><strong>Step 2: Configure routes</strong></h4>
+<p>API Gateway autoconfigura una ruta basándose en tu Lambda.</p>
+<ol>
+<li>Verás una ruta por defecto: <code>ANY /{prefijo}-get-vinilos</code></li>
+<li><strong>Modifícala</strong>:<br />
+   - <strong>Method</strong>: Cambia <code>ANY</code> a <code>GET</code> (dropdown)<br />
+   - <strong>Resource path</strong>: Cambia a <code>/vinilos</code></li>
+</ol>
+<p>Debería quedar: <code>GET /vinilos</code></p>
+<ol start="3">
+<li><strong>Integration target</strong>: Debe mostrar tu Lambda</li>
+<li>Haz clic en <strong>"Next"</strong></li>
+</ol>
+<h4 id="step-3-configure-stages"><strong>Step 3: Configure stages</strong></h4>
+<p>Un <strong>stage</strong> es un entorno de despliegue (dev, prod, etc.).</p>
+<ol>
+<li><strong>Stage name</strong>: <code>$default</code> (por defecto, está bien)</li>
+<li><strong>Auto-deploy</strong>: ✅ Activado (despliega automáticamente cambios)</li>
+<li>Haz clic en <strong>"Next"</strong></li>
+</ol>
+<h4 id="step-4-review-and-create"><strong>Step 4: Review and create</strong></h4>
+<ol>
+<li>Revisa la configuración</li>
+<li>Haz clic en <strong>"Create"</strong></li>
+</ol>
+<p>⏱️ API Gateway tardará unos segundos en crear la API.</p>
+<hr />
+<h3 id="paso-25-anadir-tag-de-estudiante-importante"><strong>Paso 2.5: Añadir Tag de Estudiante (IMPORTANTE)</strong></h3>
+<p>⚠️ <strong>IMPORTANTE para seguridad multi-tenant</strong>: Debes añadir un tag con tu nombre de estudiante.</p>
+<ol>
+<li>Una vez creada la API, ve a la pestaña <strong>"Tags"</strong></li>
+<li>Haz clic en <strong>"Manage tags"</strong></li>
+<li>Haz clic en <strong>"Add new tag"</strong></li>
+<li><strong>Key</strong>: <code>Student</code></li>
+<li><strong>Value</strong>: <code>{tu-prefijo}</code> (ejemplo: <code>juan-perez</code>)</li>
+<li>Haz clic en <strong>"Save"</strong></li>
+</ol>
+<p>✅ Este tag te permite gestionar esta API (sin él, no podrás modificarla después).</p>
+<hr />
+<h3 id="paso-3-obtener-la-url-de-la-api"><strong>Paso 3: Obtener la URL de la API</strong></h3>
+<p>Una vez creada:</p>
+<ol>
+<li>Verás un mensaje: <strong>"API successfully created"</strong></li>
+<li>En la parte superior, encontrarás:<br />
+   - <strong>Invoke URL</strong>: <code>https://xxxxxxxxxx.execute-api.eu-west-1.amazonaws.com</code></li>
+</ol>
+<p><strong>Esta es la URL base de tu API</strong>. 📋 <strong>Cópiala</strong>.</p>
+<hr />
+<h2 id="parte-2-probar-la-api">🧪 Parte 2: Probar la API</h2>
+<h3 id="opcion-1-desde-el-navegador"><strong>Opción 1: Desde el Navegador</strong></h3>
+<ol>
+<li>Abre tu navegador</li>
+<li>
+<p>Pega la URL y añade <code>/vinilos</code>:<br />
+<code>https://xxxxxxxxxx.execute-api.eu-west-1.amazonaws.com/vinilos</code></p>
+</li>
+<li>
+<p>Pulsa Enter</p>
+</li>
+</ol>
+<p>✅ Deberías ver el JSON con los 5 vinilos.</p>
+<hr />
+<h3 id="opcion-2-con-curl-linea-de-comandos"><strong>Opción 2: Con curl (Línea de Comandos)</strong></h3>
+<p>Abre tu terminal (o Cloud9) y ejecuta:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>https://xxxxxxxxxx.execute-api.eu-west-1.amazonaws.com/vinilos
+</code></pre></div>
+
+<p><strong>Respuesta esperada</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Catálogo de vinilos desde DynamoDB&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vinilos&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Abbey Road&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The Beatles&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">25.99</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1969</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://...abbey-road.jpg&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="err">...</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="opcion-3-con-postman"><strong>Opción 3: Con Postman</strong></h3>
+<ol>
+<li>Abre Postman</li>
+<li>Crea una nueva request:<br />
+   - <strong>Method</strong>: GET<br />
+   - <strong>URL</strong>: <code>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos</code></li>
+<li>Haz clic en <strong>"Send"</strong></li>
+</ol>
+<p>✅ Deberías ver la respuesta JSON en el body.</p>
+<hr />
+<h2 id="arquitectura-completa">🔍 Arquitectura Completa</h2>
+<p>Has construido esta arquitectura serverless:</p>
+<div class="highlight"><pre><span></span><code>┌────────────────┐
+│    Cliente     │
+│ (curl/browser) │
+└────────┬───────┘
+         │ GET /vinilos
+         ↓
+┌─────────────────────────────────────────┐
+│         API Gateway                      │
+│  Invoke URL + /vinilos                  │
+└────────┬────────────────────────────────┘
+         │ Proxy integration
+         ↓
+┌────────────────────────────────────────┐
+│       Lambda Function                   │
+│     {prefijo}-get-vinilos              │
+└────┬───────────────────────────────┬───┘
+     │                               │
+     │ Scan                          │ Read URLs
+     ↓                               ↓
+┌─────────────────┐        ┌──────────────────┐
+│   DynamoDB      │        │       S3         │
+│ {prefijo}-      │        │  {prefijo}-      │
+│ vinilos         │        │  vinilos-        │
+│                 │        │  imagenes        │
+└─────────────────┘        └──────────────────┘
+</code></pre></div>
+
+<hr />
+<h2 id="que-has-aprendido">🎓 ¿Qué has Aprendido?</h2>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API Gateway</strong></td>
+<td>Servicio para crear y gestionar APIs</td>
+</tr>
+<tr>
+<td><strong>HTTP API</strong></td>
+<td>Tipo de API (más simple y barata)</td>
+</tr>
+<tr>
+<td><strong>Route</strong></td>
+<td>Combinación de método HTTP + path (GET /vinilos)</td>
+</tr>
+<tr>
+<td><strong>Integration</strong></td>
+<td>Conexión entre API Gateway y backend (Lambda)</td>
+</tr>
+<tr>
+<td><strong>Stage</strong></td>
+<td>Entorno de despliegue (dev, prod)</td>
+</tr>
+<tr>
+<td><strong>Invoke URL</strong></td>
+<td>URL pública de la API</td>
+</tr>
+<tr>
+<td><strong>Proxy Integration</strong></td>
+<td>API Gateway pasa la request completa a Lambda</td>
+</tr>
+<tr>
+<td><strong>CORS</strong></td>
+<td>Permite peticiones desde navegadores web</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="configurar-cors-opcional-pero-recomendado">🌐 Configurar CORS (Opcional pero Recomendado)</h2>
+<p>Si quieres consumir esta API desde un navegador (aplicación Vue, React, etc.), necesitas habilitar <strong>CORS</strong>.</p>
+<h3 id="que-es-cors">¿Qué es CORS?</h3>
+<p><strong>Cross-Origin Resource Sharing</strong> es un mecanismo de seguridad del navegador que bloquea peticiones de un dominio (ej: <code>localhost:3000</code>) a otro dominio (ej: <code>api.amazonaws.com</code>) a menos que el servidor lo permita explícitamente.</p>
+<h3 id="configurar-cors">Configurar CORS</h3>
+<ol>
+<li>Ve a tu API en API Gateway</li>
+<li>En el menú lateral, haz clic en <strong>"CORS"</strong></li>
+<li>Haz clic en <strong>"Configure"</strong></li>
+<li><strong>Access-Control-Allow-Origin</strong>: <code>*</code> (permite todos los orígenes)<br />
+   - En producción, especificarías tu dominio: <code>https://miapp.com</code></li>
+<li><strong>Access-Control-Allow-Methods</strong>: Marca <code>GET, POST, PUT, DELETE, OPTIONS</code></li>
+<li><strong>Access-Control-Allow-Headers</strong>: Marca <code>*</code> o especifica <code>Content-Type, Authorization</code></li>
+<li>Haz clic en <strong>"Save"</strong></li>
+</ol>
+<p>✅ Ahora tu API puede ser consumida desde navegadores web.</p>
+<hr />
+<h2 id="monitorizar-la-api">📊 Monitorizar la API</h2>
+<p>API Gateway guarda métricas automáticamente en CloudWatch.</p>
+<h3 id="ver-metricas">Ver Métricas</h3>
+<ol>
+<li>Ve a tu API en API Gateway</li>
+<li>Haz clic en tu stage (<code>$default</code>)</li>
+<li>Pestaña <strong>"Monitoring"</strong></li>
+</ol>
+<p>Verás gráficas de:<br />
+- <strong>Count</strong>: Número de peticiones<br />
+- <strong>4XXError</strong>: Errores de cliente (404, 400, etc.)<br />
+- <strong>5XXError</strong>: Errores de servidor (500, 502, etc.)<br />
+- <strong>Latency</strong>: Tiempo de respuesta</p>
+<hr />
+<h2 id="anadir-una-api-key-avanzado-opcional">🔐 Añadir una API Key (Avanzado - Opcional)</h2>
+<p>HTTP API no soporta API Keys directamente (solo REST API), pero puedes usar un <strong>Lambda Authorizer</strong> custom o migrar a REST API.</p>
+<p>Para este ejemplo, lo dejaremos sin autenticación (API pública).</p>
+<p>En el <strong>Módulo 2 (Pentesting)</strong> veremos por qué esto es inseguro 😈</p>
+<hr />
+<h2 id="ejercicios-opcional">🧪 Ejercicios (Opcional)</h2>
+<ol>
+<li>
+<p><strong>Prueba métodos no permitidos</strong>:<br />
+<code>bash
+   curl -X POST https://xxx.execute-api.eu-west-1.amazonaws.com/vinilos</code><br />
+   ¿Qué código de estado devuelve?</p>
+</li>
+<li>
+<p><strong>Mide la latencia</strong>:<br />
+<code>bash
+   curl -w "\nTiempo total: %{time_total}s\n" https://xxx.../vinilos</code></p>
+</li>
+<li>
+<p><strong>Prueba rutas inexistentes</strong>:<br />
+<code>bash
+   curl https://xxx.../albums</code></p>
+</li>
+<li>
+<p><strong>Añade una segunda ruta</strong> (nueva Lambda):<br />
+   - Crea Lambda <code>{prefijo}-get-artistas</code><br />
+   - Añade ruta <code>GET /artistas</code> en API Gateway</p>
+</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="error-403-missing-authentication-token">Error 403: "Missing Authentication Token"</h3>
+<p><strong>Causa</strong>: La ruta no existe o está mal escrita.</p>
+<p><strong>Solución</strong>:<br />
+- Verifica que accedes a <code>/vinilos</code> (no <code>/vinyl</code> o <code>/albums</code>)<br />
+- Verifica el método (GET, no POST)</p>
+<hr />
+<h3 id="error-502-internal-server-error">Error 502: "Internal Server Error"</h3>
+<p><strong>Causa</strong>: Lambda devolvió una respuesta mal formada.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a Lambda → Logs (CloudWatch)<br />
+2. Busca errores en los logs<br />
+3. Verifica que Lambda devuelve <code>statusCode</code> y <code>body</code> (string)</p>
+<hr />
+<h3 id="error-500-timeout">Error 500: Timeout</h3>
+<p><strong>Causa</strong>: Lambda tardó más de 30 segundos.</p>
+<p><strong>Solución</strong>:<br />
+- Verifica que DynamoDB responde correctamente<br />
+- Revisa los logs de Lambda</p>
+<hr />
+<h3 id="la-api-no-devuelve-datos-actualizados">La API no devuelve datos actualizados</h3>
+<p><strong>Causa</strong>: Lambda está cacheando la respuesta (no debería con HTTP API).</p>
+<p><strong>Solución</strong>:<br />
+- Haz una petición con <code>?timestamp=$(date +%s)</code> para forzar bypass de caché del navegador<br />
+- Verifica en Lambda que lee correctamente de DynamoDB</p>
+<hr />
+<h3 id="cors-errors-en-navegador">CORS errors en navegador</h3>
+<p><strong>Error</strong>: <code>Access to fetch at '...' has been blocked by CORS policy</code></p>
+<p><strong>Solución</strong>:<br />
+- Sigue los pasos de "Configurar CORS" (arriba)<br />
+- Verifica que API Gateway devuelve headers:<br />
+<code>Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, ...</code></p>
+<hr />
+<h2 id="costos">📈 Costos</h2>
+<p>API Gateway es muy económico:</p>
+<ul>
+<li><strong>Free Tier</strong>: 1 millón de peticiones/mes gratis (primeros 12 meses)</li>
+<li><strong>Después</strong>: $1.00 por millón de peticiones (HTTP API)</li>
+<li><strong>Data transfer</strong>: $0.09 por GB (salida hacia Internet)</li>
+</ul>
+<p><strong>Ejemplo</strong>: 100,000 peticiones/día ≈ 3M/mes = <strong>$2/mes</strong> después del free tier.</p>
+<hr />
+<h2 id="proximos-pasos">🚀 Próximos Pasos</h2>
+<h3 id="lo-que-hemos-construido">Lo que hemos construido</h3>
+<p>✅ <strong>API HTTP pública</strong> que devuelve catálogo de vinilos<br />
+✅ <strong>Arquitectura serverless</strong> completa (API Gateway + Lambda + DynamoDB + S3)<br />
+✅ <strong>Sin servidores que gestionar</strong> (todo serverless)<br />
+✅ <strong>Escalado automático</strong> (de 0 a millones de peticiones)</p>
+<h3 id="lo-que-falta-siguientes-modulos">Lo que falta (siguientes módulos)</h3>
+<p>❌ <strong>Autenticación</strong>: Cualquiera puede acceder<br />
+❌ <strong>Autorización</strong>: No hay control de permisos<br />
+❌ <strong>Validación de entrada</strong>: No se validan los datos<br />
+❌ <strong>Rate limiting</strong>: Sin protección contra abuso<br />
+❌ <strong>Monitorización</strong>: Solo logs básicos<br />
+❌ <strong>Securización</strong>: Muchas vulnerabilidades</p>
+<p>En el <strong>Módulo 2 (Pentesting)</strong> atacaremos esta API 🔓<br />
+En el <strong>Módulo 3 (Securización)</strong> la protegeremos 🔒</p>
+<hr />
+<h2 id="checklist-de-verificacion-final">✅ Checklist de Verificación Final</h2>
+<p>Antes de pasar a SAM, comprueba que tienes:</p>
+<ul>
+<li>[ ] HTTP API creada: <code>{prefijo}-vinilos-api</code></li>
+<li>[ ] Ruta configurada: <code>GET /vinilos</code></li>
+<li>[ ] Integración con Lambda funcionando</li>
+<li>[ ] Invoke URL copiada y guardada</li>
+<li>[ ] API responde correctamente desde navegador</li>
+<li>[ ] API responde correctamente desde curl</li>
+<li>[ ] JSON incluye 5 vinilos con imágenes</li>
+<li>[ ] Tag <code>Student: {prefijo}</code> añadido a la API</li>
+<li>[ ] CORS configurado (si aplica)</li>
+<li>[ ] Métricas visibles en CloudWatch</li>
+</ul>
+<hr />
+<h2 id="enhorabuena">🎉 ¡Enhorabuena!</h2>
+<p>Has construido tu primera arquitectura serverless completa en AWS:</p>
+<div class="highlight"><pre><span></span><code>✅ Lambda (compute)
+✅ DynamoDB (database)
+✅ S3 (storage)
+✅ API Gateway (API)
+✅ IAM (permissions)
+✅ CloudWatch (logs &amp; monitoring)
+</code></pre></div>
+
+<p><strong>Próximo</strong>:<br />
+- <a href="./ejercicio-opcional-s3-trigger.html">Ejercicio Opcional (Homework): S3 Trigger + Lambda + CSV</a> - Arquitectura event-driven<br />
+- <a href="./05-migracion-sam.html">Migrar a SAM (Infrastructure as Code)</a></p>
+<hr />
+<h2 id="notas-para-el-instructor">📝 Notas para el Instructor</h2>
+<p><strong>Tiempo estimado</strong>: 15 minutos</p>
+<p><strong>Puntos clave a enfatizar</strong>:<br />
+1. HTTP API vs REST API (precio y simplicidad)<br />
+2. Proxy integration (API Gateway pasa todo a Lambda)<br />
+3. CORS (problema común en aplicaciones web)<br />
+4. Monitoring básico (CloudWatch)<br />
+5. La API está completamente insegura (prefacio al Módulo 2)</p>
+<p><strong>Demo en vivo recomendada</strong>:<br />
+- Mostrar petición en navegador<br />
+- Mostrar logs en CloudWatch en tiempo real<br />
+- Probar con Postman<br />
+- Simular error 404 (ruta inexistente)</p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+</body>
+</html>

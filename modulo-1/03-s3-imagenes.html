@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03 S3 Imagenes - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">03 S3 Imagenes</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="iteracion-3-anadir-s3-para-imagenes">Iteración 3: Añadir S3 para Imágenes</h1>
+<h2 id="almacenar-y-servir-imagenes-de-portadas-de-vinilos">Almacenar y Servir Imágenes de Portadas de Vinilos</h2>
+<hr />
+<h2 id="objetivo">🎯 Objetivo</h2>
+<p>Crear un bucket en S3, subir imágenes de portadas de vinilos, configurar acceso público, y modificar la Lambda para incluir las URLs de las imágenes en la respuesta.</p>
+<hr />
+<h2 id="conceptos-clave">📚 Conceptos Clave</h2>
+<h3 id="que-es-amazon-s3">¿Qué es Amazon S3?</h3>
+<p><strong>Amazon S3 (Simple Storage Service)</strong> es un servicio de almacenamiento de objetos:</p>
+<ul>
+<li>✅ <strong>Almacenamiento ilimitado</strong>: Desde bytes hasta petabytes</li>
+<li>✅ <strong>Alta durabilidad</strong>: 99.999999999% (11 nueves)</li>
+<li>✅ <strong>Altamente disponible</strong>: 99.99% uptime SLA</li>
+<li>✅ <strong>Serverless</strong>: Sin servidores que gestionar</li>
+<li>✅ <strong>Casos de uso</strong>: Imágenes, videos, backups, logs, data lakes, sitios web estáticos</li>
+</ul>
+<h3 id="conceptos-fundamentales">Conceptos Fundamentales</h3>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bucket</strong></td>
+<td>Contenedor para objetos (equivalente a "carpeta raíz")</td>
+</tr>
+<tr>
+<td><strong>Object</strong></td>
+<td>Archivo almacenado (imagen, video, JSON, etc.)</td>
+</tr>
+<tr>
+<td><strong>Key</strong></td>
+<td>Nombre/ruta del objeto (ej: <code>imagenes/abbey-road.jpg</code>)</td>
+</tr>
+<tr>
+<td><strong>URL</strong></td>
+<td>Dirección HTTP para acceder al objeto</td>
+</tr>
+<tr>
+<td><strong>Bucket Policy</strong></td>
+<td>Permisos de acceso al bucket y sus objetos</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tipos-de-acceso">Tipos de Acceso</h3>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────┐
+│ PRIVADO (por defecto)               │
+│ Solo el propietario puede acceder   │
+└─────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────┐
+│ PÚBLICO (con bucket policy)         │
+│ Cualquiera puede leer (HTTP GET)    │
+└─────────────────────────────────────┘
+</code></pre></div>
+
+<hr />
+<h2 id="parte-1-crear-bucket-s3">🛠️ Parte 1: Crear Bucket S3</h2>
+<h3 id="paso-1-navegar-a-s3"><strong>Paso 1: Navegar a S3</strong></h3>
+<ol>
+<li>En la consola AWS, busca <strong>"S3"</strong></li>
+<li>Haz clic en <strong>"S3"</strong> (servicio)</li>
+<li>Haz clic en <strong>"Create bucket"</strong> (botón naranja)</li>
+</ol>
+<hr />
+<h3 id="paso-2-configurar-el-bucket"><strong>Paso 2: Configurar el Bucket</strong></h3>
+<h4 id="general-configuration"><strong>General configuration</strong></h4>
+<ul>
+<li><strong>Bucket name</strong>: <code>{tu-prefijo}-vinilos-imagenes</code></li>
+<li>Ejemplo: <code>juan-perez-vinilos-imagenes</code></li>
+<li>⚠️ Los nombres de bucket S3 son <strong>globalmente únicos</strong> (no solo en tu cuenta)</li>
+<li>
+<p>✅ Usa tu prefijo para evitar colisiones</p>
+</li>
+<li>
+<p><strong>AWS Region</strong>: <code>EU (Ireland) eu-west-1</code></p>
+</li>
+</ul>
+<h4 id="object-ownership"><strong>Object Ownership</strong></h4>
+<ul>
+<li>Deja <strong>"ACLs disabled (recommended)"</strong> seleccionado</li>
+</ul>
+<h4 id="block-public-access-settings-for-this-bucket"><strong>Block Public Access settings for this bucket</strong></h4>
+<p>⚠️ <strong>IMPORTANTE</strong>: Desmarcar para permitir acceso público</p>
+<ol>
+<li><strong>Desactiva</strong> la casilla: <strong>"Block all public access"</strong></li>
+<li>Aparecerá un warning: <strong>Marca</strong> la casilla de confirmación:<br />
+   - ✅ "I acknowledge that the current settings might result in this bucket and the objects within becoming public"</li>
+</ol>
+<h4 id="bucket-versioning"><strong>Bucket Versioning</strong></h4>
+<ul>
+<li>Deja <strong>"Disable"</strong> (no necesitamos versionado para este ejemplo)</li>
+</ul>
+<h4 id="default-encryption"><strong>Default encryption</strong></h4>
+<ul>
+<li>Deja <strong>"Server-side encryption with Amazon S3 managed keys (SSE-S3)"</strong></li>
+</ul>
+<ol start="4">
+<li>Haz clic en <strong>"Create bucket"</strong></li>
+</ol>
+<p>✅ El bucket se crea instantáneamente.</p>
+<hr />
+<h2 id="parte-2-subir-imagenes">🛠️ Parte 2: Subir Imágenes</h2>
+<h3 id="paso-1-preparar-las-imagenes"><strong>Paso 1: Preparar las Imágenes</strong></h3>
+<p>Para este ejercicio, puedes usar:</p>
+<p><strong>Opción A</strong>: Imágenes reales (busca portadas en formato JPG/PNG)</p>
+<p><strong>Opción B</strong>: Placeholders (imágenes genéricas de prueba)<br />
+- https://placehold.co/300x300/png?text=Abbey+Road<br />
+- https://placehold.co/300x300/png?text=Dark+Side<br />
+- https://placehold.co/300x300/png?text=Thriller<br />
+- https://placehold.co/300x300/png?text=Cohen<br />
+- https://placehold.co/300x300/png?text=JJ+Cale</p>
+<p>💡 <strong>Para el curso</strong>, el instructor puede proporcionar 5 imágenes pre-descargadas.</p>
+<hr />
+<h3 id="paso-2-subir-las-imagenes-a-s3"><strong>Paso 2: Subir las Imágenes a S3</strong></h3>
+<ol>
+<li>Haz clic en el nombre de tu bucket (<code>{prefijo}-vinilos-imagenes</code>)</li>
+<li>Haz clic en <strong>"Upload"</strong> (botón naranja)</li>
+<li>Haz clic en <strong>"Add files"</strong></li>
+<li>
+<p>Selecciona las 5 imágenes con estos nombres:<br />
+   - <code>abbey-road.jpg</code><br />
+   - <code>dark-side.jpg</code><br />
+   - <code>thriller.jpg</code><br />
+   - <code>cohen.jpg</code><br />
+   - <code>jj-cale.jpg</code></p>
+</li>
+<li>
+<p>Haz clic en <strong>"Upload"</strong> (botón naranja abajo)</p>
+</li>
+<li>Espera a que aparezca <strong>"Upload succeeded"</strong></li>
+<li>Haz clic en <strong>"Close"</strong></li>
+</ol>
+<p>✅ Deberías ver las 5 imágenes listadas en tu bucket.</p>
+<hr />
+<h3 id="paso-3-verificar-las-urls"><strong>Paso 3: Verificar las URLs</strong></h3>
+<ol>
+<li>Haz clic en el nombre de una imagen (ej: <code>abbey-road.jpg</code>)</li>
+<li>
+<p>En la sección <strong>"Object overview"</strong>, encontrarás:<br />
+   - <strong>Object URL</strong>: <code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/abbey-road.jpg</code></p>
+</li>
+<li>
+<p><strong>Copia la URL</strong> y pégala en tu navegador</p>
+</li>
+<li>❌ Deberías ver un error: <strong>"Access Denied"</strong></li>
+</ol>
+<p><strong>¿Por qué?</strong> El bucket es privado por defecto. Necesitamos configurar una <strong>bucket policy</strong>.</p>
+<hr />
+<h2 id="parte-3-configurar-bucket-policy-acceso-publico">🛠️ Parte 3: Configurar Bucket Policy (Acceso Público)</h2>
+<h3 id="paso-1-crear-bucket-policy"><strong>Paso 1: Crear Bucket Policy</strong></h3>
+<ol>
+<li>Ve a tu bucket (<code>{prefijo}-vinilos-imagenes</code>)</li>
+<li>Haz clic en la pestaña <strong>"Permissions"</strong></li>
+<li>Desplázate hasta <strong>"Bucket policy"</strong></li>
+<li>Haz clic en <strong>"Edit"</strong></li>
+</ol>
+<hr />
+<h3 id="paso-2-pegar-la-politica"><strong>Paso 2: Pegar la Política</strong></h3>
+<p>Copia y pega esta política JSON:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;Version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;Statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;Sid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PublicReadGetObject&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Principal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;s3:GetObject&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;arn:aws:s3:::{TU-PREFIJO}-vinilos-imagenes/*&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>⚠️ <strong>IMPORTANTE</strong>: En la línea <code>"Resource"</code>, reemplaza <code>{TU-PREFIJO}</code> con tu prefijo real.</p>
+<p><strong>Ejemplo</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;arn:aws:s3:::juan-perez-vinilos-imagenes/*&quot;</span>
+</code></pre></div>
+
+<hr />
+<h3 id="paso-3-guardar-la-politica"><strong>Paso 3: Guardar la Política</strong></h3>
+<ol>
+<li>Haz clic en <strong>"Save changes"</strong></li>
+<li>Aparecerá un banner naranja: <strong>"This bucket has public access"</strong> ✅</li>
+</ol>
+<hr />
+<h3 id="paso-4-verificar-acceso-publico"><strong>Paso 4: Verificar Acceso Público</strong></h3>
+<ol>
+<li>Vuelve a la pestaña <strong>"Objects"</strong></li>
+<li>Haz clic en una imagen (<code>abbey-road.jpg</code>)</li>
+<li>Copia la <strong>Object URL</strong></li>
+<li>Pégala en tu navegador</li>
+</ol>
+<p>✅ Ahora deberías ver la imagen sin error "Access Denied".</p>
+<hr />
+<h2 id="analisis-de-la-bucket-policy">🔍 Análisis de la Bucket Policy</h2>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;Version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span><span class="w">          </span><span class="c1">// Versión del lenguaje de políticas</span>
+<span class="w">    </span><span class="nt">&quot;Statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">                     </span><span class="c1">// Lista de permisos</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;Sid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PublicReadGetObject&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1">// ID descriptivo</span>
+<span class="w">            </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span><span class="w">              </span><span class="c1">// Permitir (vs &quot;Deny&quot;)</span>
+<span class="w">            </span><span class="nt">&quot;Principal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="p">,</span><span class="w">               </span><span class="c1">// Cualquier usuario (público)</span>
+<span class="w">            </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;s3:GetObject&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// Operación: leer objetos</span>
+<span class="w">            </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;arn:aws:s3:::bucket/*&quot;</span><span class="w">  </span><span class="c1">// Todos los objetos</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="componentes-clave">Componentes Clave</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Principal</code></td>
+<td><code>"*"</code></td>
+<td>Cualquier usuario (público)</td>
+</tr>
+<tr>
+<td><code>Action</code></td>
+<td><code>"s3:GetObject"</code></td>
+<td>Solo lectura (GET), no escritura</td>
+</tr>
+<tr>
+<td><code>Resource</code></td>
+<td><code>".../*"</code></td>
+<td>Todos los objetos del bucket</td>
+</tr>
+<tr>
+<td><code>Effect</code></td>
+<td><code>"Allow"</code></td>
+<td>Permitir la acción</td>
+</tr>
+</tbody>
+</table>
+<p>💡 <strong>Seguridad</strong>: Esta política solo permite <strong>lectura</strong>. Nadie puede:<br />
+- Subir archivos (<code>PutObject</code>)<br />
+- Eliminar archivos (<code>DeleteObject</code>)<br />
+- Listar el contenido del bucket (<code>ListBucket</code>)</p>
+<hr />
+<h2 id="parte-4-actualizar-dynamodb-con-urls">🛠️ Parte 4: Actualizar DynamoDB con URLs</h2>
+<p>Ahora actualizamos los items en DynamoDB para incluir la URL de la imagen.</p>
+<h3 id="paso-1-construir-las-urls"><strong>Paso 1: Construir las URLs</strong></h3>
+<p>El formato de las URLs es:</p>
+<div class="highlight"><pre><span></span><code><span class="nl">https:</span><span class="c1">//{nombre-bucket}.s3.{region}.amazonaws.com/{nombre-archivo}</span>
+</code></pre></div>
+
+<p><strong>Ejemplo</strong>:</p>
+<div class="highlight"><pre><span></span><code>https://juan-perez-vinilos-imagenes.s3.eu-west-1.amazonaws.com/abbey-road.jpg
+</code></pre></div>
+
+<hr />
+<h3 id="paso-2-actualizar-items-en-dynamodb"><strong>Paso 2: Actualizar Items en DynamoDB</strong></h3>
+<ol>
+<li>Ve a <strong>DynamoDB</strong> → Tu tabla (<code>{prefijo}-vinilos</code>)</li>
+<li>Pestaña <strong>"Explore table items"</strong></li>
+<li>Haz clic en el <strong>id "1"</strong> (Abbey Road)</li>
+<li>Haz clic en <strong>"Edit item"</strong></li>
+<li>Haz clic en <strong>"Add new attribute"</strong> → <strong>String</strong></li>
+<li><strong>Attribute name</strong>: <code>imagen</code></li>
+<li><strong>Value</strong>: <code>https://{tu-prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/abbey-road.jpg</code></li>
+<li>Haz clic en <strong>"Save changes"</strong></li>
+</ol>
+<p>Repite para los 5 vinilos:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Archivo</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>abbey-road.jpg</td>
+<td><code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/abbey-road.jpg</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>dark-side.jpg</td>
+<td><code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/dark-side.jpg</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>thriller.jpg</td>
+<td><code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/thriller.jpg</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>cohen.jpg</td>
+<td><code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/cohen.jpg</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>jj-cale.jpg</td>
+<td><code>https://{prefijo}-vinilos-imagenes.s3.eu-west-1.amazonaws.com/jj-cale.jpg</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="probar-la-lambda">🧪 Probar la Lambda</h2>
+<h3 id="sin-cambios-de-codigo"><strong>Sin Cambios de Código</strong></h3>
+<p>La buena noticia: <strong>no necesitas modificar el código de Lambda</strong> 😊</p>
+<p>DynamoDB ahora devuelve el atributo <code>imagen</code>, y Lambda lo incluye automáticamente en la respuesta.</p>
+<h3 id="ejecutar-test"><strong>Ejecutar Test</strong></h3>
+<ol>
+<li>Ve a tu Lambda (<code>{prefijo}-get-vinilos</code>)</li>
+<li>Pestaña <strong>"Test"</strong></li>
+<li>Haz clic en <strong>"Test"</strong></li>
+</ol>
+<h4 id="resultado-esperado">✅ Resultado Esperado</h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;statusCode&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{\&quot;mensaje\&quot;:\&quot;Catálogo de vinilos desde DynamoDB\&quot;,\&quot;total\&quot;:5,\&quot;vinilos\&quot;:[{\&quot;id\&quot;:\&quot;1\&quot;,\&quot;titulo\&quot;:\&quot;Abbey Road\&quot;,\&quot;artista\&quot;:\&quot;The Beatles\&quot;,\&quot;precio\&quot;:25.99,\&quot;año\&quot;:1969,\&quot;imagen\&quot;:\&quot;https://...abbey-road.jpg\&quot;}, ...]}&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Ahora cada vinilo tiene el campo <code>imagen</code> con la URL pública de S3. ✅</p>
+<hr />
+<h2 id="que-has-aprendido">🎓 ¿Qué has Aprendido?</h2>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>S3 Bucket</strong></td>
+<td>Contenedor para almacenar objetos (archivos)</td>
+</tr>
+<tr>
+<td><strong>S3 Object</strong></td>
+<td>Archivo individual en S3</td>
+</tr>
+<tr>
+<td><strong>Object URL</strong></td>
+<td>Dirección HTTP para acceder a un objeto</td>
+</tr>
+<tr>
+<td><strong>Bucket Policy</strong></td>
+<td>Documento JSON que define permisos de acceso</td>
+</tr>
+<tr>
+<td><strong>Public Access</strong></td>
+<td>Configuración para permitir acceso anónimo</td>
+</tr>
+<tr>
+<td><strong>Principal: "*"</strong></td>
+<td>En IAM, significa "cualquier usuario"</td>
+</tr>
+<tr>
+<td><strong>s3:GetObject</strong></td>
+<td>Permiso para leer/descargar objetos</td>
+</tr>
+<tr>
+<td><strong>ARN</strong></td>
+<td>Amazon Resource Name (identificador único de recurso)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="casos-de-uso-de-s3">📊 Casos de Uso de S3</h2>
+<table>
+<thead>
+<tr>
+<th>Uso</th>
+<th>Ejemplo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Imágenes</strong></td>
+<td>Fotos de productos, avatares de usuarios</td>
+</tr>
+<tr>
+<td><strong>Videos</strong></td>
+<td>Streaming de video on-demand</td>
+</tr>
+<tr>
+<td><strong>Archivos estáticos</strong></td>
+<td>CSS, JS, HTML de sitios web</td>
+</tr>
+<tr>
+<td><strong>Backups</strong></td>
+<td>Copias de seguridad de bases de datos</td>
+</tr>
+<tr>
+<td><strong>Data Lakes</strong></td>
+<td>Big data, análisis con Athena/EMR</td>
+</tr>
+<tr>
+<td><strong>Logs</strong></td>
+<td>Almacenar logs de aplicaciones</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="consideraciones-de-seguridad">🔒 Consideraciones de Seguridad</h2>
+<h3 id="bucket-publico-riesgos">⚠️ Bucket Público - Riesgos</h3>
+<ol>
+<li><strong>Cualquiera puede descargar</strong> los archivos si conoce la URL</li>
+<li><strong>Los bots pueden indexar</strong> el contenido (Google, etc.)</li>
+<li><strong>Costos de transferencia</strong> si hay mucho tráfico externo</li>
+</ol>
+<h3 id="alternativas-mas-seguras-avanzado">✅ Alternativas Más Seguras (Avanzado)</h3>
+<div class="highlight"><pre><span></span><code>┌──────────────────────────────────────────┐
+│ CloudFront                               │
+│ (CDN con autenticación)                  │
+└──────────────────────────────────────────┘
+                 ↓
+┌──────────────────────────────────────────┐
+│ S3 (privado)                             │
+│ + Signed URLs (URLs firmadas con caducidad) │
+└──────────────────────────────────────────┘
+</code></pre></div>
+
+<p>Aprenderemos esto en módulos posteriores.</p>
+<hr />
+<h2 id="ejercicios-opcional">🧪 Ejercicios (Opcional)</h2>
+<ol>
+<li><strong>Crea una carpeta</strong> en S3 llamada <code>portadas/</code> y mueve las imágenes ahí<br />
+   - Actualiza las URLs en DynamoDB</li>
+<li><strong>Sube una imagen adicional</strong> y añade un sexto vinilo</li>
+<li><strong>Borra el bucket policy</strong> y verifica que las imágenes ya no son accesibles</li>
+<li><strong>Investiga</strong>: ¿Qué pasa si pones <code>"Action": "s3:*"</code> en la policy?</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="error-access-denied-al-ver-la-imagen">Error: "Access Denied" al ver la imagen</h3>
+<p><strong>Causa</strong>: Bucket policy no configurada o incorrecta.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a bucket → Permissions → Bucket policy<br />
+2. Verifica que el ARN incluye <code>/*</code> al final<br />
+3. Verifica que reemplazaste <code>{TU-PREFIJO}</code> con tu prefijo real<br />
+4. Espera 10-15 segundos (propagación)</p>
+<hr />
+<h3 id="error-the-bucket-policy-is-too-large">Error: "The bucket policy is too large"</h3>
+<p><strong>Causa</strong>: El JSON tiene errores de sintaxis.</p>
+<p><strong>Solución</strong>:<br />
+- Copia de nuevo la política desde la guía<br />
+- Verifica que no faltan comas, corchetes o llaves<br />
+- Usa un validador JSON online</p>
+<hr />
+<h3 id="las-urls-en-la-respuesta-de-lambda-estan-rotas">Las URLs en la respuesta de Lambda están rotas</h3>
+<p><strong>Causa</strong>: URLs mal escritas en DynamoDB.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a una imagen en S3 y copia la URL exacta<br />
+2. Verifica el formato: <code>https://BUCKET.s3.REGION.amazonaws.com/FILE</code><br />
+3. Actualiza los items en DynamoDB</p>
+<hr />
+<h3 id="warning-this-bucket-has-public-access">Warning: "This bucket has public access"</h3>
+<p><strong>Esperado</strong>: Es correcto. Queremos que las imágenes sean públicas.</p>
+<hr />
+<h2 id="alternativa-urls-generadas-por-lambda-avanzado">💡 Alternativa: URLs Generadas por Lambda (Avanzado)</h2>
+<p>En lugar de guardar URLs en DynamoDB, Lambda podría <strong>construir</strong> las URLs dinámicamente:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">BUCKET_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;{prefijo}-vinilos-imagenes&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">REGION</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span><span class="p">;</span>
+
+<span class="c1">// Para cada vinilo:</span>
+<span class="nx">vinilo</span><span class="p">.</span><span class="nx">imagen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`https://</span><span class="si">${</span><span class="nx">BUCKET_NAME</span><span class="si">}</span><span class="sb">.s3.</span><span class="si">${</span><span class="nx">REGION</span><span class="si">}</span><span class="sb">.amazonaws.com/</span><span class="si">${</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">imagenArchivo</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+</code></pre></div>
+
+<p><strong>Ventaja</strong>: Si cambias el bucket, solo modificas Lambda (no DynamoDB).</p>
+<hr />
+<h2 id="checklist-de-verificacion">✅ Checklist de Verificación</h2>
+<p>Antes de continuar, comprueba:</p>
+<ul>
+<li>[ ] Bucket S3 creado: <code>{prefijo}-vinilos-imagenes</code></li>
+<li>[ ] 5 imágenes subidas al bucket</li>
+<li>[ ] Bucket policy configurada (acceso público de lectura)</li>
+<li>[ ] URLs de imágenes accesibles desde navegador</li>
+<li>[ ] Items en DynamoDB actualizados con URLs</li>
+<li>[ ] Lambda devuelve vinilos con campo <code>imagen</code></li>
+<li>[ ] URLs funcionan y muestran las imágenes</li>
+</ul>
+<hr />
+<p><strong>Siguiente</strong>: <a href="./04-api-gateway.html">Iteración 4 - Exponer con API Gateway</a></p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+</body>
+</html>

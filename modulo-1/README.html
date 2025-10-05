@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readme - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">Readme</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="ejemplos-en-consola-aws-modulo-1">Ejemplos en Consola AWS - Módulo 1</h1>
+<h2 id="catalogo-de-vinilos-serverless">Catálogo de Vinilos Serverless</h2>
+<hr />
+<h2 id="indice-de-guias">📖 Índice de Guías</h2>
+<p>Este directorio contiene las guías paso a paso para construir una API serverless completa usando la consola de AWS.</p>
+<h3 id="orden-de-ejecucion"><strong>Orden de Ejecución</strong></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Guía</th>
+<th>Duración</th>
+<th>Servicios</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><a href="./00-vision-general.html">Visión General</a></td>
+<td>5 min</td>
+<td>Introducción</td>
+</tr>
+<tr>
+<td>1</td>
+<td><a href="./01-lambda-hardcoded.html">Lambda Hardcoded</a></td>
+<td>15 min</td>
+<td>Lambda</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="./02-dynamodb-table.html">Añadir DynamoDB</a></td>
+<td>20 min</td>
+<td>Lambda + DynamoDB + IAM</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="./03-s3-imagenes.html">Añadir S3 Imágenes</a></td>
+<td>20 min</td>
+<td>S3 + Bucket Policies</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="./04-api-gateway.html">Exponer con API Gateway</a></td>
+<td>15 min</td>
+<td>API Gateway + CORS</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tiempo total</strong>: ~75 minutos (1 hora 15 min)</p>
+<hr />
+<h2 id="objetivo-final">🎯 Objetivo Final</h2>
+<p>Construir esta arquitectura serverless:</p>
+<div class="highlight"><pre><span></span><code>Cliente (curl/navegador)
+    ↓
+API Gateway (GET /vinilos)
+    ↓
+Lambda (get-vinilos)
+    ↓
+DynamoDB (tabla vinilos) + S3 (imágenes)
+    ↓
+Respuesta JSON con catálogo
+</code></pre></div>
+
+<hr />
+<h2 id="recursos-creados">📚 Recursos Creados</h2>
+<p>Al finalizar las 4 iteraciones, habrás creado:</p>
+<table>
+<thead>
+<tr>
+<th>Recurso</th>
+<th>Nombre</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lambda</td>
+<td><code>{prefijo}-get-vinilos</code></td>
+<td>Función Node.js 20.x</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td><code>{prefijo}-vinilos</code></td>
+<td>Tabla NoSQL</td>
+</tr>
+<tr>
+<td>S3 Bucket</td>
+<td><code>{prefijo}-vinilos-imagenes</code></td>
+<td>Almacenamiento objetos</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td><code>{prefijo}-vinilos-api</code></td>
+<td>HTTP API</td>
+</tr>
+<tr>
+<td>IAM Role</td>
+<td><code>{prefijo}-get-vinilos-role-*</code></td>
+<td>Permisos Lambda</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total de servicios AWS</strong>: 5</p>
+<hr />
+<h2 id="conceptos-aprendidos">🎓 Conceptos Aprendidos</h2>
+<h3 id="servicios-aws">Servicios AWS</h3>
+<ul>
+<li>✅ <strong>AWS Lambda</strong>: Computación serverless</li>
+<li>✅ <strong>Amazon DynamoDB</strong>: Base de datos NoSQL</li>
+<li>✅ <strong>Amazon S3</strong>: Almacenamiento de objetos</li>
+<li>✅ <strong>Amazon API Gateway</strong>: APIs HTTP</li>
+<li>✅ <strong>AWS IAM</strong>: Gestión de permisos</li>
+<li>✅ <strong>Amazon CloudWatch</strong>: Logs y monitorización</li>
+</ul>
+<h3 id="conceptos-serverless">Conceptos Serverless</h3>
+<ul>
+<li>✅ Arquitectura event-driven</li>
+<li>✅ Pay-per-use (pago por uso)</li>
+<li>✅ Escalado automático</li>
+<li>✅ Sin gestión de servidores</li>
+<li>✅ Alta disponibilidad</li>
+<li>✅ Integración de servicios</li>
+</ul>
+<h3 id="conceptos-de-desarrollo">Conceptos de Desarrollo</h3>
+<ul>
+<li>✅ APIs REST</li>
+<li>✅ JSON como formato de intercambio</li>
+<li>✅ Códigos de estado HTTP</li>
+<li>✅ CORS (Cross-Origin Resource Sharing)</li>
+<li>✅ Manejo de errores</li>
+<li>✅ Logging y debugging</li>
+</ul>
+<hr />
+<h2 id="proximos-pasos">🚀 Próximos Pasos</h2>
+<p>Una vez completadas las 4 iteraciones en consola:</p>
+<ol>
+<li><strong>Ejercicio Opcional (Homework)</strong>: <a href="./ejercicio-opcional-s3-trigger.html">S3 Trigger + Lambda + CSV Processing</a> - Aprende arquitectura event-driven</li>
+<li><strong>Migración a SAM</strong>: Automatizar todo con Infrastructure as Code</li>
+<li><strong>Añadir funcionalidad</strong>: POST, PUT, DELETE endpoints</li>
+<li><strong>Aplicación completa</strong>: Tienda de vinilos con frontend Vue</li>
+<li><strong>Módulo 2</strong>: Pentesting de la aplicación</li>
+<li><strong>Módulo 3</strong>: Securización y mejores prácticas</li>
+</ol>
+<hr />
+<h2 id="nomenclatura">📝 Nomenclatura</h2>
+<p><strong>SIEMPRE usa tu prefijo personal al principio del nombre</strong>:</p>
+<p>✅ <code>juan-perez-get-vinilos</code><br />
+✅ <code>juan-perez-vinilos</code><br />
+✅ <code>juan-perez-vinilos-imagenes</code><br />
+✅ <code>juan-perez-vinilos-api</code></p>
+<p>❌ <code>get-vinilos-juan-perez</code> (prefijo al final)<br />
+❌ <code>vinilos</code> (sin prefijo)</p>
+<hr />
+<h2 id="soporte">🐛 Soporte</h2>
+<p>Si encuentras problemas:</p>
+<ol>
+<li><strong>Revisa el troubleshooting</strong> de cada guía</li>
+<li><strong>Verifica la región</strong>: debe ser <code>eu-west-1</code> (Irlanda)</li>
+<li><strong>Revisa CloudWatch Logs</strong>: Busca errores en los logs de Lambda</li>
+<li><strong>Comprueba IAM</strong>: Verifica que Lambda tiene los permisos necesarios</li>
+</ol>
+<hr />
+<h2 id="costos-aproximados">📊 Costos Aproximados</h2>
+<p>Todos los servicios están en Free Tier:</p>
+<table>
+<thead>
+<tr>
+<th>Servicio</th>
+<th>Free Tier</th>
+<th>Coste después</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lambda</td>
+<td>1M requests/mes</td>
+<td>$0.20/1M requests</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td>25 GB + 200M requests/mes</td>
+<td>$1.25/GB/mes</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>5 GB + 20K GET/mes</td>
+<td>$0.023/GB/mes</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td>1M requests/mes (12 meses)</td>
+<td>$1.00/1M requests</td>
+</tr>
+<tr>
+<td>CloudWatch</td>
+<td>5 GB logs/mes</td>
+<td>$0.50/GB</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Coste estimado de este ejemplo</strong>: $0.00 (dentro del Free Tier)</p>
+<hr />
+<h2 id="checklist-final">✅ Checklist Final</h2>
+<p>Al completar todas las guías, deberías poder:</p>
+<ul>
+<li>[ ] Invocar Lambda desde consola y obtener respuesta</li>
+<li>[ ] Ver 5 items en DynamoDB</li>
+<li>[ ] Acceder a imágenes en S3 desde navegador</li>
+<li>[ ] Hacer GET a API Gateway y obtener JSON completo</li>
+<li>[ ] Ver logs en CloudWatch</li>
+<li>[ ] Entender el flujo de datos completo</li>
+<li>[ ] Explicar qué hace cada servicio</li>
+</ul>
+<hr />
+<h2 id="felicidades">🎉 ¡Felicidades!</h2>
+<p>Has construido tu primera arquitectura serverless end-to-end en AWS usando la consola.</p>
+<p><strong>Siguiente</strong>: <a href="../sam-migration/">Migración a SAM</a> para automatizar todo con código.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+</body>
+</html>

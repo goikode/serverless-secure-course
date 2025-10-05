@@ -1,0 +1,724 @@
+/* Goikode Serverless Secure Course - Documentation Styles */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+:root {
+    --primary-cyan: #00bcd4;
+    --dark-cyan: #0084a0;
+    --text-dark: #2c3e50;
+    --text-gray: #7f8c8d;
+    --border-light: #ecf0f1;
+    --bg-light: #f8f9fa;
+}
+
+/* ========== HEADER WITH LOGO AND STUDENT PREFIX ========== */
+.doc-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    color: var(--text-dark);
+    padding: 0.8rem 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--primary-cyan);
+}
+
+.doc-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.logo-link:hover {
+    opacity: 0.8;
+}
+
+.doc-logo {
+    height: 40px;
+    width: auto;
+}
+
+.doc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.doc-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.student-prefix-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+}
+
+.student-prefix-label {
+    color: var(--text-gray);
+    margin-right: 0.5rem;
+}
+
+#header-student-prefix {
+    font-weight: 600;
+    color: var(--primary-cyan);
+}
+
+#change-prefix-btn {
+    background-color: var(--primary-cyan);
+    border: none;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+#change-prefix-btn:hover {
+    background-color: var(--dark-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,188,212,0.3);
+}
+
+/* ========== MODAL FOR PREFIX INPUT ========== */
+.prefix-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--dark-cyan) 100%);
+    color: white;
+    padding: 1.5rem;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-body p {
+    color: var(--text-dark);
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+}
+
+.format-example {
+    background-color: var(--bg-light);
+    border-left: 4px solid var(--primary-cyan);
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0 1.5rem 0;
+}
+
+.format-example code {
+    background-color: white;
+    color: var(--primary-cyan);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+#prefix-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    border: 2px solid var(--border-light);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+#prefix-input:focus {
+    outline: none;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+}
+
+#prefix-input.error {
+    border-color: #f44336;
+}
+
+.error-message {
+    display: none;
+    color: #f44336;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background-color: var(--bg-light);
+    text-align: right;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--dark-cyan) 100%);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ========== STUDENT PREFIX HIGHLIGHTING ========== */
+.student-prefix {
+    background-color: #fff176;
+    color: var(--text-dark);
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    border: 1px solid #ffd54f;
+}
+
+/* ========== SIDEBAR NAVIGATION ========== */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 60px; /* Below header */
+    width: 280px;
+    height: calc(100vh - 60px);
+    background: white;
+    border-right: 1px solid var(--border-light);
+    overflow-y: auto;
+    z-index: 900;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 2px solid var(--primary-cyan);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-light);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.sidebar-header h2::before {
+    content: none;
+}
+
+.sidebar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-gray);
+    padding: 0;
+    line-height: 1;
+}
+
+.sidebar-toggle:hover {
+    color: var(--primary-cyan);
+}
+
+.sidebar-content {
+    padding: 1rem 0;
+}
+
+.sidebar-loading {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-gray);
+    font-style: italic;
+}
+
+.sidebar-module {
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-module-title {
+    padding: 0.8rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-cyan);
+    background: var(--bg-light);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-doc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-doc-item {
+    margin: 0;
+}
+
+.sidebar-doc-link {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem 0.6rem 2rem;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-doc-link:hover {
+    background: var(--bg-light);
+    border-left-color: var(--primary-cyan);
+    color: var(--primary-cyan);
+}
+
+.sidebar-doc-link.active {
+    background: var(--bg-light);
+    border-left-color: var(--primary-cyan);
+    color: var(--primary-cyan);
+    font-weight: 600;
+}
+
+.sidebar-doc-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.sidebar-open-btn {
+    display: none;
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-cyan);
+    color: white;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 800;
+    transition: all 0.2s ease;
+}
+
+.sidebar-open-btn:hover {
+    background: var(--dark-cyan);
+    transform: scale(1.1);
+}
+
+/* ========== DOCUMENT BODY ========== */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background-color: #fafafa;
+    margin: 0;
+    padding: 0;
+}
+
+.doc-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    min-height: 100vh;
+}
+
+.doc-container.with-sidebar {
+    margin-left: 280px;
+    max-width: calc(100% - 280px);
+}
+
+.doc-content {
+    padding: 2rem 3rem 4rem 3rem;
+}
+
+/* ========== HEADERS ========== */
+h1 {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--primary-cyan);
+    font-size: 2rem;
+    font-weight: 500;
+    margin: 2rem 0 1.5rem 0;
+    border-bottom: 2px solid var(--primary-cyan);
+    padding-bottom: 0.5rem;
+}
+
+h1::before {
+    content: "//";
+    color: var(--primary-cyan);
+    font-weight: 300;
+    margin-right: 0.8rem;
+}
+
+h2 {
+    color: var(--text-dark);
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem 0;
+}
+
+h2::before {
+    content: "›";
+    color: var(--primary-cyan);
+    margin-right: 0.6rem;
+}
+
+h3 {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dark);
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 1.5rem 0 1rem 0;
+}
+
+h4 {
+    color: var(--text-gray);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 1.2rem 0 0.8rem 0;
+}
+
+h4::before {
+    content: "▸";
+    color: var(--primary-cyan);
+    margin-right: 0.5rem;
+}
+
+/* ========== PARAGRAPHS ========== */
+p {
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+/* ========== CODE BLOCKS ========== */
+pre {
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid;
+}
+
+/* Terminal/Bash (dark) */
+pre.bash {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border-left: 4px solid #4fd1c7;
+    border-color: #4a5568;
+}
+
+/* Default gray */
+pre:not(.bash):not(.sql):not(.javascript):not(.python) {
+    background-color: #f7f8fa;
+    color: #2d3748;
+    border-left: 4px solid var(--primary-cyan);
+    border-color: #e2e8f0;
+}
+
+/* Inline code */
+code:not(pre code) {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.9em;
+    font-weight: 400;
+    border-radius: 3px;
+    border: 1px solid #e9ecef;
+}
+
+/* ========== LISTS ========== */
+ul, ol {
+    padding-left: 2rem;
+    margin: 1rem 0;
+}
+
+li {
+    margin-bottom: 0.8rem;
+    line-height: 1.6;
+}
+
+li::marker {
+    color: var(--primary-cyan);
+}
+
+/* ========== TABLES ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+th {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    padding: 0.8rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 2px solid var(--border-light);
+    text-align: left;
+}
+
+td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: top;
+}
+
+tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* ========== INFO BOXES ========== */
+.info-box {
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 6px;
+    border-left: 4px solid;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.info-box.info {
+    background-color: #e3f2fd;
+    border-left-color: #2196f3;
+    color: #1565c0;
+}
+
+.info-box.warning {
+    background-color: #fff3e0;
+    border-left-color: #ff9800;
+    color: #e65100;
+}
+
+.info-box.danger {
+    background-color: #ffebee;
+    border-left-color: #f44336;
+    color: #c62828;
+}
+
+.info-box.success {
+    background-color: #e8f5e8;
+    border-left-color: #4caf50;
+    color: #2e7d32;
+}
+
+/* ========== IMAGES ========== */
+.image-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.image-caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-gray);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* ========== LINKS ========== */
+a {
+    color: var(--primary-cyan);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+a:hover {
+    color: var(--dark-cyan);
+    text-decoration: underline;
+}
+
+/* ========== BLOCKQUOTES ========== */
+blockquote {
+    margin: 1.5rem 0;
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-light);
+    border-left: 4px solid var(--primary-cyan);
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+}
+
+/* ========== HORIZONTAL RULE ========== */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, var(--primary-cyan), transparent);
+    margin: 2rem 0;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-toggle {
+        display: block;
+    }
+
+    .sidebar-open-btn {
+        display: block;
+    }
+
+    .doc-container.with-sidebar {
+        margin-left: 0;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .doc-header {
+        padding: 0.8rem 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .doc-header-left {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .doc-title {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .doc-header-right {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .student-prefix-display {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+
+    #change-prefix-btn {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .doc-content {
+        padding: 1.5rem;
+    }
+
+    .sidebar {
+        width: 85%;
+        max-width: 300px;
+        top: 0;
+        height: 100vh;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    pre {
+        padding: 1rem;
+        font-size: 0.8rem;
+    }
+
+    table {
+        font-size: 0.85rem;
+    }
+
+    th, td {
+        padding: 0.5rem;
+    }
+}
