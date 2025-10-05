@@ -125,52 +125,6 @@ Resources:
             ApiId: !Ref VinilosHttpApi
 
   ##########################################################################
-  # Lambda Function - Create Vinilo
-  ##########################################################################
-  CreateViniloFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub '${StudentPrefix}-create-vinilo'
-      CodeUri: src/handlers/create-vinilo/
-      Handler: index.handler
-      Description: Creates a new vinyl record in DynamoDB
-      Policies:
-        # SAM Policy Templates - simplified IAM permissions
-        - DynamoDBWritePolicy:
-            TableName: !Ref VinilosTable
-      Events:
-        # API Gateway integration
-        CreateVinilo:
-          Type: HttpApi
-          Properties:
-            Path: /vinilos
-            Method: post
-            ApiId: !Ref VinilosHttpApi
-
-  ##########################################################################
-  # Lambda Function - Get Vinilo by ID
-  ##########################################################################
-  GetViniloByIdFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub '${StudentPrefix}-get-vinilo-by-id'
-      CodeUri: src/handlers/get-vinilo-by-id/
-      Handler: index.handler
-      Description: Returns a specific vinyl record by ID
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref VinilosTable
-        - S3ReadPolicy:
-            BucketName: !Ref VinilosImagenesBucket
-      Events:
-        GetViniloById:
-          Type: HttpApi
-          Properties:
-            Path: /vinilos/{id}
-            Method: get
-            ApiId: !Ref VinilosHttpApi
-
-  ##########################################################################
   # API Gateway HTTP API
   ##########################################################################
   VinilosHttpApi:
@@ -183,9 +137,6 @@ Resources:
           - '*'
         AllowMethods:
           - GET
-          - POST
-          - PUT
-          - DELETE
           - OPTIONS
         AllowHeaders:
           - '*'
@@ -206,22 +157,10 @@ Outputs:
       Name: !Sub '${StudentPrefix}-VinilosApiUrl'
 
   GetVinilosFunctionArn:
-    Description: Lambda Function ARN (GET)
+    Description: Lambda Function ARN
     Value: !GetAtt GetVinilosFunction.Arn
     Export:
       Name: !Sub '${StudentPrefix}-GetVinilosFunctionArn'
-
-  CreateViniloFunctionArn:
-    Description: Lambda Function ARN (POST)
-    Value: !GetAtt CreateViniloFunction.Arn
-    Export:
-      Name: !Sub '${StudentPrefix}-CreateViniloFunctionArn'
-
-  GetViniloByIdFunctionArn:
-    Description: Lambda Function ARN (GET by ID)
-    Value: !GetAtt GetViniloByIdFunction.Arn
-    Export:
-      Name: !Sub '${StudentPrefix}-GetViniloByIdFunctionArn'
 
   VinilosTableName:
     Description: DynamoDB table name
