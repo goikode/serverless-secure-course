@@ -14,26 +14,15 @@ class SidebarNavigation {
         // Course structure - hardcoded for now, could be loaded from JSON
         this.courseStructure = [
             {
-                number: '1.A',
-                title: 'Módulo 1.A: Consola AWS',
+                number: 1,
+                title: 'Módulo 1: Desarrollo Funcional',
                 docs: [
-                    { number: '00', title: 'Visión General', path: '../modulo-1a-consola/00-vision-general.html' },
-                    { number: '01', title: 'Lambda Hardcoded', path: '../modulo-1a-consola/01-lambda-hardcoded.html' },
-                    { number: '02', title: 'DynamoDB Table', path: '../modulo-1a-consola/02-dynamodb-table.html' },
-                    { number: '03', title: 'S3 Imágenes', path: '../modulo-1a-consola/03-s3-imagenes.html' },
-                    { number: '04', title: 'API Gateway', path: '../modulo-1a-consola/04-api-gateway.html' },
-                    { number: 'EX', title: 'Ejercicio: S3 Trigger', path: '../modulo-1a-consola/ejercicio-opcional-s3-trigger.html' }
-                ]
-            },
-            {
-                number: '1.B',
-                title: 'Módulo 1.B: SAM (IaC)',
-                docs: [
-                    { number: '00', title: 'Introducción SAM', path: '../modulo-1b-sam/00-introduccion-sam.html' },
-                    { number: '01', title: 'Workflow Desarrollo', path: '../modulo-1b-sam/01-workflow-desarrollo.html' },
-                    { number: '02', title: 'Ejercicio: Base', path: '../modulo-1b-sam/02-ejercicio-despliegue-base.html' },
-                    { number: '03', title: 'Ejercicio: POST', path: '../modulo-1b-sam/03-ejercicio-post.html' },
-                    { number: '04', title: 'Ejercicio: GET by ID', path: '../modulo-1b-sam/04-ejercicio-get-by-id.html' }
+                    { number: '00', title: 'Visión General', path: '00-vision-general.html' },
+                    { number: '01', title: 'Lambda Hardcoded', path: '01-lambda-hardcoded.html' },
+                    { number: '02', title: 'DynamoDB Table', path: '02-dynamodb-table.html' },
+                    { number: '03', title: 'S3 Imágenes', path: '03-s3-imagenes.html' },
+                    { number: '04', title: 'API Gateway', path: '04-api-gateway.html' },
+                    { number: 'EX', title: 'Ejercicio: S3 Trigger', path: 'ejercicio-opcional-s3-trigger.html' }
                 ]
             }
             // Module 2 and 3 will be added when they exist

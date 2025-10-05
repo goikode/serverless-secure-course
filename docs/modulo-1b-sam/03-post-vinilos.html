@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03 Post Vinilos - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">03 Post Vinilos</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="anadir-endpoint-post-vinilos">Añadir Endpoint POST /vinilos</h1>
+<h2 id="crear-vinilos-con-sam">Crear Vinilos con SAM</h2>
+<hr />
+<h2 id="objetivos-de-aprendizaje">🎯 Objetivos de Aprendizaje</h2>
+<p>Al finalizar esta sección, serás capaz de:</p>
+<ul>
+<li>✅ Añadir nuevos endpoints a una API SAM existente</li>
+<li>✅ Implementar operaciones de escritura en DynamoDB con SAM</li>
+<li>✅ Validar datos de entrada en Lambda</li>
+<li>✅ Generar IDs únicos con <code>crypto.randomUUID()</code></li>
+<li>✅ Manejar códigos de estado HTTP correctos (201, 400, 409, 500)</li>
+<li>✅ Usar <code>ConditionExpression</code> en DynamoDB para evitar duplicados</li>
+<li>✅ Actualizar aplicaciones SAM existentes sin downtime</li>
+</ul>
+<hr />
+<h2 id="comparacion-get-vs-post">📊 Comparación: GET vs POST</h2>
+<table>
+<thead>
+<tr>
+<th>Aspecto</th>
+<th>GET /vinilos</th>
+<th>POST /vinilos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Propósito</strong></td>
+<td>Leer datos</td>
+<td>Crear datos</td>
+</tr>
+<tr>
+<td><strong>Operación DynamoDB</strong></td>
+<td>Scan</td>
+<td>PutItem</td>
+</tr>
+<tr>
+<td><strong>Permisos IAM</strong></td>
+<td><code>DynamoDBReadPolicy</code></td>
+<td><code>DynamoDBWritePolicy</code></td>
+</tr>
+<tr>
+<td><strong>Request body</strong></td>
+<td>No</td>
+<td>Sí (JSON con datos)</td>
+</tr>
+<tr>
+<td><strong>Response code</strong></td>
+<td>200 OK</td>
+<td>201 Created</td>
+</tr>
+<tr>
+<td><strong>Idempotencia</strong></td>
+<td>✅ Sí</td>
+<td>❌ No (cada POST crea nuevo item)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="arquitectura-del-endpoint-post">🏗️ Arquitectura del Endpoint POST</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────┐
+│   Cliente   │
+│  (Postman)  │
+└──────┬──────┘
+       │ POST /vinilos
+       │ Body: { titulo, artista, precio, ... }
+       ↓
+┌─────────────────────────┐
+│     API Gateway         │
+│  POST /vinilos          │
+└────────┬────────────────┘
+         │ invoke
+         ↓
+┌────────────────────────┐
+│  Lambda                │
+│  create-vinilo         │
+│  1. Parse JSON         │
+│  2. Validate data      │
+│  3. Generate ID        │
+│  4. Insert to DynamoDB │
+└────────┬───────────────┘
+         │ PutItem
+         ↓
+  ┌──────────────────┐
+  │   DynamoDB       │
+  │ {prefijo}-vinilos│
+  │                  │
+  │ + nuevo vinilo   │
+  └──────────────────┘
+</code></pre></div>
+
+<hr />
+<h2 id="paso-1-anadir-funcion-al-template-sam">🛠️ Paso 1: Añadir Función al Template SAM</h2>
+<p>Edita <code>template.yaml</code> y añade la nueva función <strong>después de GetVinilosFunction</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">Resources</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">GetVinilosFunction</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># ... ya existe</span>
+
+<span class="w">  </span><span class="c1">##########################################################################</span>
+<span class="w">  </span><span class="c1"># Lambda Function - Create Vinilo</span>
+<span class="w">  </span><span class="c1">##########################################################################</span>
+<span class="w">  </span><span class="nt">CreateViniloFunction</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::Serverless::Function</span>
+<span class="w">    </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">FunctionName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;${StudentPrefix}-create-vinilo&#39;</span>
+<span class="w">      </span><span class="nt">CodeUri</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">src/handlers/create-vinilo/</span>
+<span class="w">      </span><span class="nt">Handler</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index.handler</span>
+<span class="w">      </span><span class="nt">Description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Creates a new vinyl record in DynamoDB</span>
+<span class="w">      </span><span class="nt">Policies</span><span class="p">:</span>
+<span class="w">        </span><span class="c1"># SAM Policy Templates - simplified IAM permissions</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">DynamoDBWritePolicy</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">TableName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosTable</span>
+<span class="w">      </span><span class="nt">Events</span><span class="p">:</span>
+<span class="w">        </span><span class="c1"># API Gateway integration</span>
+<span class="w">        </span><span class="nt">CreateVinilo</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HttpApi</span>
+<span class="w">          </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">Path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/vinilos</span>
+<span class="w">            </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post</span>
+<span class="w">            </span><span class="nt">ApiId</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosHttpApi</span>
+</code></pre></div>
+
+<h3 id="analisis-del-template">🔍 Análisis del Template</h3>
+<h4 id="1-dynamodbwritepolicy">1. <code>DynamoDBWritePolicy</code></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Policies</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">DynamoDBWritePolicy</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">TableName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosTable</span>
+</code></pre></div>
+
+<p>SAM genera automáticamente una política IAM con permisos:<br />
+- <code>dynamodb:PutItem</code><br />
+- <code>dynamodb:UpdateItem</code><br />
+- <code>dynamodb:DeleteItem</code></p>
+<h4 id="2-api-gateway-event">2. API Gateway Event</h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Events</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">CreateVinilo</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HttpApi</span>
+<span class="w">    </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/vinilos</span><span class="w">      </span><span class="c1"># Misma ruta que GET</span>
+<span class="w">      </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post</span><span class="w">        </span><span class="c1"># Diferente método</span>
+<span class="w">      </span><span class="nt">ApiId</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosHttpApi</span><span class="w">  </span><span class="c1"># Misma API</span>
+</code></pre></div>
+
+<p><strong>Importante</strong>: API Gateway enruta según <strong>método HTTP</strong>, no solo path.</p>
+<ul>
+<li><code>GET /vinilos</code> → GetVinilosFunction</li>
+<li><code>POST /vinilos</code> → CreateViniloFunction</li>
+</ul>
+<hr />
+<h2 id="paso-2-crear-el-handler-de-lambda">🛠️ Paso 2: Crear el Handler de Lambda</h2>
+<p>Crea el directorio y archivo:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>src/handlers/create-vinilo
+touch<span class="w"> </span>src/handlers/create-vinilo/index.js
+touch<span class="w"> </span>src/handlers/create-vinilo/package.json
+</code></pre></div>
+
+<h3 id="codigo-srchandlerscreate-viniloindexjs">Código: <code>src/handlers/create-vinilo/index.js</code></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;@aws-sdk/client-dynamodb&#39;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">,</span><span class="w"> </span><span class="nx">PutCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;@aws-sdk/lib-dynamodb&#39;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">randomUUID</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;crypto&#39;</span><span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">ddbClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="p">({</span><span class="w"> </span><span class="nx">region</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REGION</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">docClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">ddbClient</span><span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TABLE_NAME</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * Validate vinyl data</span>
+<span class="cm"> */</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">validateVinilo</span><span class="p">(</span><span class="nx">vinilo</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="c1">// Required fields</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;titulo es requerido y debe ser un string no vacío&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">artista</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">artista</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">artista</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;artista es requerido y debe ser un string no vacío&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">precio</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">precio</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;precio es requerido&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">precio</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;number&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">precio</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;precio debe ser un número mayor que 0&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Optional fields validation</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;number&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">1900</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">().</span><span class="nx">getFullYear</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="sb">`año debe ser un número entre 1900 y </span><span class="si">${</span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">().</span><span class="nx">getFullYear</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">errors</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * Lambda handler</span>
+<span class="cm"> */</span>
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Lambda invocada - POST vinilo&#39;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 1. Parse request body</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="nx">body</span><span class="p">;</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">body</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;{}&#39;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">parseError</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">400</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Request body inválido&#39;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">mensaje</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;El body debe ser JSON válido&#39;</span>
+<span class="w">                </span><span class="p">})</span>
+<span class="w">            </span><span class="p">};</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 2. Validate vinyl data</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">validation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">validateVinilo</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">validation</span><span class="p">.</span><span class="nx">valid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">400</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Datos de vinilo inválidos&#39;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">errores</span><span class="o">:</span><span class="w"> </span><span class="nx">validation</span><span class="p">.</span><span class="nx">errors</span>
+<span class="w">                </span><span class="p">})</span>
+<span class="w">            </span><span class="p">};</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 3. Generate ID if not provided</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">randomUUID</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 4. Build vinyl item for DynamoDB</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">vinilo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">id</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">titulo</span><span class="o">:</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">titulo</span><span class="p">.</span><span class="nx">trim</span><span class="p">(),</span>
+<span class="w">            </span><span class="nx">artista</span><span class="o">:</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">artista</span><span class="p">.</span><span class="nx">trim</span><span class="p">(),</span>
+<span class="w">            </span><span class="nx">precio</span><span class="o">:</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">precio</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">año</span><span class="o">:</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">año</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">imagen_key</span><span class="o">:</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">imagen_key</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;placeholder.jpg&#39;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">createdAt</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">().</span><span class="nx">toISOString</span><span class="p">(),</span>
+<span class="w">            </span><span class="nx">updatedAt</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">().</span><span class="nx">toISOString</span><span class="p">()</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="c1">// 5. Insert into DynamoDB (with duplicate prevention)</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Item</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">ConditionExpression</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;attribute_not_exists(id)&#39;</span><span class="w"> </span><span class="c1">// Prevent duplicates</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">PutCommand</span><span class="p">(</span><span class="nx">params</span><span class="p">));</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Vinilo created successfully:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 6. Return success response</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">201</span><span class="p">,</span><span class="w"> </span><span class="c1">// Created</span>
+<span class="w">            </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                </span><span class="nx">mensaje</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Vinilo creado exitosamente&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">vinilo</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilo</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Error:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// Handle duplicate ID (ConditionalCheckFailedException)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;ConditionalCheckFailedException&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">409</span><span class="p">,</span><span class="w"> </span><span class="c1">// Conflict</span>
+<span class="w">                </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Vinilo ya existe&#39;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">mensaje</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Ya existe un vinilo con ese ID&#39;</span>
+<span class="w">                </span><span class="p">})</span>
+<span class="w">            </span><span class="p">};</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Generic error</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Error al crear vinilo&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">mensaje</span><span class="o">:</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="codigo-srchandlerscreate-vinilopackagejson">Código: <code>src/handlers/create-vinilo/package.json</code></h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create-vinilo-handler&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Lambda handler for creating vinyl records&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;main&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;index.js&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;@aws-sdk/client-dynamodb&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^3.700.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;@aws-sdk/lib-dynamodb&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^3.700.0&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h2 id="paso-3-instalar-dependencias">🛠️ Paso 3: Instalar Dependencias</h2>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>src/handlers/create-vinilo
+npm<span class="w"> </span>install
+<span class="nb">cd</span><span class="w"> </span>../../..
+</code></pre></div>
+
+<hr />
+<h2 id="paso-4-anadir-output-al-template-opcional">🛠️ Paso 4: Añadir Output al Template (Opcional)</h2>
+<p>Edita <code>template.yaml</code> y añade en la sección <code>Outputs</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">Outputs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">VinilosApiUrl</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># ... ya existe</span>
+
+<span class="w">  </span><span class="nt">CreateViniloFunctionArn</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Lambda Function ARN (POST)</span>
+<span class="w">    </span><span class="nt">Value</span><span class="p">:</span><span class="w"> </span><span class="kt">!GetAtt</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CreateViniloFunction.Arn</span>
+<span class="w">    </span><span class="nt">Export</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Name</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;${StudentPrefix}-CreateViniloFunctionArn&#39;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="paso-5-build-y-deploy">🚀 Paso 5: Build y Deploy</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Build (empaqueta nuevo handler)</span>
+sam<span class="w"> </span>build
+
+<span class="c1"># Deploy (actualiza stack)</span>
+sam<span class="w"> </span>deploy
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>Changeset:
+---------------------------------------------------------------------
+Operation            LogicalResourceId             ResourceType
+---------------------------------------------------------------------
++ Add                CreateViniloFunction          AWS::Lambda::Function
++ Add                CreateViniloApiRoute          AWS::ApiGatewayV2::Route
++ Add                CreateViniloPermission        AWS::Lambda::Permission
+---------------------------------------------------------------------
+
+Deploy this changeset? [y/N]: y
+
+UPDATE_IN_PROGRESS   AWS::CloudFormation::Stack        juan-perez-vinilos-stack
+CREATE_IN_PROGRESS   AWS::Lambda::Function             CreateViniloFunction
+CREATE_COMPLETE      AWS::Lambda::Function             CreateViniloFunction
+CREATE_IN_PROGRESS   AWS::ApiGatewayV2::Route          CreateViniloApiRoute
+CREATE_COMPLETE      AWS::ApiGatewayV2::Route          CreateViniloApiRoute
+UPDATE_COMPLETE      AWS::CloudFormation::Stack        juan-perez-vinilos-stack
+
+Successfully updated stack - juan-perez-vinilos-stack
+</code></pre></div>
+
+<p>⏱️ <strong>Tiempo</strong>: ~1 minuto (solo crea nueva función, no afecta la GET).</p>
+<hr />
+<h2 id="paso-6-probar-el-endpoint-post">🧪 Paso 6: Probar el Endpoint POST</h2>
+<h3 id="obtener-la-url-de-la-api">Obtener la URL de la API</h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>cloudformation<span class="w"> </span>describe-stacks<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s1">&#39;Stacks[0].Outputs[?OutputKey==`VinilosApiUrl`].OutputValue&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>text
+</code></pre></div>
+
+<h3 id="prueba-1-crear-vinilo-valido">Prueba 1: Crear Vinilo Válido</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;titulo&quot;: &quot;Rumours&quot;,</span>
+<span class="s1">    &quot;artista&quot;: &quot;Fleetwood Mac&quot;,</span>
+<span class="s1">    &quot;precio&quot;: 24.99,</span>
+<span class="s1">    &quot;año&quot;: 1977,</span>
+<span class="s1">    &quot;imagen_key&quot;: &quot;rumours.jpg&quot;</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+
+<p><strong>Respuesta esperada (201 Created)</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Vinilo creado exitosamente&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vinilo&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;f7d9c8a3-4b2e-4f1a-9d5c-8e7f6a5b4c3d&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rumours&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fleetwood Mac&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">24.99</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1977</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rumours.jpg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:45.123Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;updatedAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:45.123Z&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="prueba-2-verificar-que-aparece-en-get">Prueba 2: Verificar que Aparece en GET</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos
+</code></pre></div>
+
+<p><strong>Deberías ver</strong>:<br />
+- Los 5 vinilos originales<br />
+- <strong>+ El nuevo vinilo "Rumours"</strong></p>
+<hr />
+<h3 id="prueba-3-validacion-campo-faltante">Prueba 3: Validación - Campo Faltante</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;titulo&quot;: &quot;Hotel California&quot;,</span>
+<span class="s1">    &quot;precio&quot;: 23.50</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+
+<p><strong>Respuesta esperada (400 Bad Request)</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Datos de vinilo inválidos&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;errores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;artista es requerido y debe ser un string no vacío&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="prueba-4-validacion-precio-invalido">Prueba 4: Validación - Precio Inválido</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type&quot;</span>:<span class="w"> </span>application/json<span class="s2">&quot; \</span>
+<span class="s2">  -d &#39;{</span>
+<span class="s2">    &quot;</span>titulo<span class="s2">&quot;: &quot;</span>Led<span class="w"> </span>Zeppelin<span class="w"> </span>IV<span class="s2">&quot;,</span>
+<span class="s2">    &quot;</span>artista<span class="s2">&quot;: &quot;</span>Led<span class="w"> </span>Zeppelin<span class="s2">&quot;,</span>
+<span class="s2">    &quot;</span>precio<span class="s2">&quot;: -10</span>
+<span class="s2">  }&#39;</span>
+</code></pre></div>
+
+<p><strong>Respuesta esperada (400 Bad Request)</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Datos de vinilo inválidos&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;errores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;precio debe ser un número mayor que 0&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="prueba-5-validacion-json-malformado">Prueba 5: Validación - JSON Malformado</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{ titulo: &quot;Bad JSON&quot; }&#39;</span><span class="w">  </span><span class="c1"># Sin comillas en key</span>
+</code></pre></div>
+
+<p><strong>Respuesta esperada (400 Bad Request)</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Request body inválido&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;El body debe ser JSON válido&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="prueba-6-duplicado-mismo-id">Prueba 6: Duplicado (mismo ID)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Crear vinilo con ID específico</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;id&quot;: &quot;test-duplicate&quot;,</span>
+<span class="s1">    &quot;titulo&quot;: &quot;Test&quot;,</span>
+<span class="s1">    &quot;artista&quot;: &quot;Test Artist&quot;,</span>
+<span class="s1">    &quot;precio&quot;: 10.00</span>
+<span class="s1">  }&#39;</span>
+
+<span class="c1"># Intentar crear de nuevo con mismo ID</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://xxxxx.execute-api.eu-west-1.amazonaws.com/vinilos<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;id&quot;: &quot;test-duplicate&quot;,</span>
+<span class="s1">    &quot;titulo&quot;: &quot;Another Test&quot;,</span>
+<span class="s1">    &quot;artista&quot;: &quot;Another Artist&quot;,</span>
+<span class="s1">    &quot;precio&quot;: 15.00</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+
+<p><strong>Respuesta esperada (409 Conflict)</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Vinilo ya existe&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ya existe un vinilo con ese ID&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h2 id="analisis-del-codigo">🔍 Análisis del Código</h2>
+<h3 id="1-codigos-de-estado-http">1. Códigos de Estado HTTP</h3>
+<table>
+<thead>
+<tr>
+<th>Código</th>
+<th>Significado</th>
+<th>Cuándo usar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>201</strong></td>
+<td>Created</td>
+<td>Recurso creado exitosamente</td>
+</tr>
+<tr>
+<td><strong>400</strong></td>
+<td>Bad Request</td>
+<td>Datos inválidos o JSON malformado</td>
+</tr>
+<tr>
+<td><strong>409</strong></td>
+<td>Conflict</td>
+<td>Recurso ya existe (duplicado)</td>
+</tr>
+<tr>
+<td><strong>500</strong></td>
+<td>Internal Server Error</td>
+<td>Error inesperado del servidor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-randomuuid-generacion-de-ids">2. <code>randomUUID()</code> - Generación de IDs</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">randomUUID</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;crypto&#39;</span><span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">body</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">randomUUID</span><span class="p">();</span>
+<span class="c1">// Ejemplo: &quot;f7d9c8a3-4b2e-4f1a-9d5c-8e7f6a5b4c3d&quot;</span>
+</code></pre></div>
+
+<p><strong>✅ Ventajas</strong>:<br />
+- ✅ Único (colisiones prácticamente imposibles)<br />
+- ✅ No secuencial (no revela cantidad de items)<br />
+- ✅ Distribuido (funciona con múltiples regiones)</p>
+<p><strong>⚠️ Alternativas</strong> (NO usar en este caso):<br />
+- ❌ <code>Math.random()</code> - no criptográficamente seguro<br />
+- ❌ Incrementales (<code>1, 2, 3...</code>) - revelan información<br />
+- ❌ Timestamps - colisiones posibles</p>
+<h3 id="3-conditionexpression-prevenir-duplicados">3. <code>ConditionExpression</code> - Prevenir Duplicados</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Item</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">ConditionExpression</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;attribute_not_exists(id)&#39;</span><span class="w">  </span><span class="c1">// 👈 Importante!</span>
+<span class="p">};</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">PutCommand</span><span class="p">(</span><span class="nx">params</span><span class="p">));</span>
+</code></pre></div>
+
+<p><strong>¿Qué hace?</strong><br />
+- Si el item con ese <code>id</code> <strong>NO existe</strong>: Crea el item ✅<br />
+- Si el item con ese <code>id</code> <strong>YA existe</strong>: Lanza <code>ConditionalCheckFailedException</code> ❌</p>
+<p><strong>Sin <code>ConditionExpression</code></strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ⚠️ PELIGRO: Sobrescribe item existente sin avisar</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">PutCommand</span><span class="p">(</span><span class="nx">params</span><span class="p">));</span>
+</code></pre></div>
+
+<h3 id="4-validacion-de-datos">4. Validación de Datos</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">validateVinilo</span><span class="p">(</span><span class="nx">vinilo</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">errors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;titulo es requerido y debe ser un string no vacío&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ...más validaciones</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">errors</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>✅ Buenas prácticas</strong>:<br />
+- ✅ Validar tipo de dato (<code>typeof</code>)<br />
+- ✅ Validar valor vacío (<code>trim().length === 0</code>)<br />
+- ✅ Devolver <strong>todos los errores</strong>, no solo el primero<br />
+- ✅ Mensajes de error descriptivos</p>
+<hr />
+<h2 id="monitorear-logs">📊 Monitorear Logs</h2>
+<p>Ver logs del nuevo handler:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>CreateViniloFunction<span class="w"> </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack<span class="w"> </span>--tail
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">20</span><span class="w"> </span><span class="n">START</span><span class="w"> </span><span class="n">RequestId</span><span class="p">:</span><span class="w"> </span><span class="n">xxx</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">20</span><span class="w"> </span><span class="n">Lambda</span><span class="w"> </span><span class="n">invocada</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">POS</span><span class="n">T</span><span class="w"> </span><span class="n">vinilo</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">20</span><span class="w"> </span><span class="n">Inserting</span><span class="w"> </span><span class="nb">int</span><span class="n">o</span><span class="w"> </span><span class="n">DynamoDB</span><span class="p">:</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">a7b3f</span><span class="o">-</span><span class="n">vinilos</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">21</span><span class="w"> </span><span class="n">Vinilo</span><span class="w"> </span><span class="n">created</span><span class="w"> </span><span class="n">successfully</span><span class="p">:</span><span class="w"> </span><span class="n">f7d9c8a3</span><span class="o">-</span><span class="mf">...</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">21</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="n">RequestId</span><span class="p">:</span><span class="w"> </span><span class="n">xxx</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">21</span><span class="w"> </span><span class="n">REPORT</span><span class="w"> </span><span class="n">Duration</span><span class="p">:</span><span class="w"> </span><span class="mf">523</span><span class="n">ms</span><span class="w"> </span><span class="n">Memory</span><span class="p">:</span><span class="w"> </span><span class="mf">85</span><span class="n">MB</span>
+</code></pre></div>
+
+<hr />
+<h2 id="mejoras-posibles-no-implementar-aun">🎯 Mejoras Posibles (No implementar aún)</h2>
+<ol>
+<li><strong>Validación avanzada</strong>: Regex para URLs, límites de caracteres</li>
+<li><strong>Sanitización</strong>: Escapar HTML, eliminar caracteres especiales</li>
+<li><strong>Rate limiting</strong>: Limitar requests por usuario/IP</li>
+<li><strong>Autenticación</strong>: Cognito o API Keys</li>
+<li><strong>Autorización</strong>: Solo admin puede crear vinilos</li>
+<li><strong>Upload de imágenes</strong>: Integrar con S3 pre-signed URLs</li>
+<li><strong>Buscar duplicados por título+artista</strong>: Evitar vinilos repetidos con diferentes IDs</li>
+</ol>
+<p><strong>💡 Estos temas se cubrirán en Módulo 2 (Vulnerabilidades) y Módulo 3 (Securización)</strong>.</p>
+<hr />
+<h2 id="checklist-de-verificacion">✅ Checklist de Verificación</h2>
+<p>Antes de continuar, asegúrate de que:</p>
+<ul>
+<li>[ ] Añadiste <code>CreateViniloFunction</code> al <code>template.yaml</code></li>
+<li>[ ] Creaste el handler en <code>src/handlers/create-vinilo/</code></li>
+<li>[ ] Instalaste dependencias con <code>npm install</code></li>
+<li>[ ] Ejecutaste <code>sam build &amp;&amp; sam deploy</code></li>
+<li>[ ] La función aparece en Lambda console</li>
+<li>[ ] POST /vinilos funciona con datos válidos (201)</li>
+<li>[ ] POST /vinilos rechaza datos inválidos (400)</li>
+<li>[ ] POST /vinilos previene duplicados (409)</li>
+<li>[ ] GET /vinilos devuelve los vinilos nuevos</li>
+<li>[ ] Logs visibles con <code>sam logs --tail</code></li>
+</ul>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="error-resource-already-exists-in-stack">Error: "Resource already exists in stack"</h3>
+<p><strong>Causa</strong>: Ya desplegaste el recurso antes.</p>
+<p><strong>Solución</strong>: SAM detectará cambios automáticamente en siguiente deploy.</p>
+<hr />
+<h3 id="error-accessdeniedexception-al-escribir-en-dynamodb">Error: "AccessDeniedException" al escribir en DynamoDB</h3>
+<p><strong>Causa</strong>: Política IAM incorrecta.</p>
+<p><strong>Solución</strong>: Verifica que uses <code>DynamoDBWritePolicy</code> (no <code>DynamoDBReadPolicy</code>).</p>
+<hr />
+<h3 id="post-devuelve-500-pero-get-funciona">POST devuelve 500 pero GET funciona</h3>
+<p><strong>Causa</strong>: Error en código Lambda (validación, parsing, etc.).</p>
+<p><strong>Solución</strong>: Ver logs:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>CreateViniloFunction<span class="w"> </span>--stack-name<span class="w"> </span><span class="o">{</span>stack<span class="o">}</span><span class="w"> </span>--tail
+</code></pre></div>
+
+<hr />
+<h3 id="vinilos-se-duplican-no-respeta-conditionexpression">Vinilos se duplican (no respeta ConditionExpression)</h3>
+<p><strong>Causa</strong>: IDs diferentes generados en cada request.</p>
+<p><strong>Solución</strong>: Si quieres evitar duplicados por título+artista (no por ID), usa:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">ConditionExpression</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;attribute_not_exists(titulo) AND attribute_not_exists(artista)&#39;</span>
+</code></pre></div>
+
+<p><strong>⚠️ Esto requiere GSI (Global Secondary Index)</strong> - tema avanzado para más adelante.</p>
+<hr />
+<h2 id="proximo-paso">🚀 Próximo Paso</h2>
+<p>Ya sabes añadir endpoints CRUD a tu API SAM. En la siguiente sección:</p>
+<p><strong><a href="./04-data-model.html">Modelo de Datos Completo: Tienda de Vinilos</a></strong></p>
+<p>Diseñaremos el modelo de datos completo para una aplicación real con:<br />
+- Múltiples tablas (vinilos, pedidos, usuarios)<br />
+- Relaciones entre entidades<br />
+- Índices secundarios (GSI)<br />
+- Patrones de acceso</p>
+<hr />
+<h2 id="referencias">📖 Referencias</h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html">DynamoDB PutItem</a></li>
+<li><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html">DynamoDB Condition Expressions</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status">HTTP Status Codes</a></li>
+<li><a href="https://nodejs.org/api/crypto.html#cryptorandomuuidoptions">Node.js crypto.randomUUID()</a></li>
+<li><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-template-list.html#dynamo-db-write-policy">SAM DynamoDBWritePolicy</a></li>
+</ul>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>

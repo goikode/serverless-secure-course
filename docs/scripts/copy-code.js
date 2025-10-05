@@ -158,18 +158,13 @@ class CopyCodeManager {
      */
     async copyInlineCode(code, button) {
         try {
-            // Get text content (excluding the copy button itself)
-            // Clone the code element to manipulate it
-            const clone = code.cloneNode(true);
-
-            // Remove the copy button from the clone
-            const copyBtn = clone.querySelector('.inline-copy-button');
-            if (copyBtn) {
-                copyBtn.remove();
+            // Get text content (excluding the copy button)
+            let text = '';
+            for (let node of code.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    text += node.textContent;
+                }
             }
-
-            // Get all text content (including text inside <strong>, <em>, etc.)
-            let text = clone.textContent.trim();
 
             // Copy to clipboard
             await navigator.clipboard.writeText(text.trim());

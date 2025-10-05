@@ -15,13 +15,14 @@ git clone https://github.com/goikode/serverless-secure-course.git
 cd serverless-secure-course
 
 # Abre la documentación HTML
-open index.html  # macOS
-xdg-open index.html  # Linux
-start index.html  # Windows
+open docs/index.html  # macOS
+xdg-open docs/index.html  # Linux
+start docs/index.html  # Windows
 ```
 
 O con un servidor local:
 ```bash
+cd docs
 python3 -m http.server 8000
 # Visita: http://localhost:8000
 ```
@@ -36,13 +37,21 @@ python3 -m http.server 8000
 
 ## 📚 Estructura del Curso
 
-### Módulo 1: Desarrollo Funcional (5h)
-Construye una aplicación serverless funcional desde cero:
+### Módulo 1.A: Desarrollo con Consola AWS (2.5h)
+Construye una aplicación serverless funcional desde la consola:
 - Lambda con datos hardcoded
 - DynamoDB para persistencia
 - S3 para almacenamiento de imágenes
 - API Gateway para exponer endpoints
 - **Ejercicio opcional**: S3 Trigger event-driven
+
+### Módulo 1.B: Infraestructura como Código con SAM (2.5h)
+Aprende a automatizar despliegues serverless:
+- Introducción a Infrastructure as Code (IaC)
+- AWS SAM CLI workflow
+- Templates SAM y gestión de recursos
+- Despliegues automatizados vs manual
+- **Ramas**: `modulo-1-base` (inicial), `modulo-1-completo` (solución)
 
 ### Módulo 2: Pentesting (3h)
 Aprende a identificar vulnerabilidades comunes:
@@ -62,17 +71,25 @@ Implementa las mejores prácticas de seguridad:
 
 ```
 serverless-secure-course/
-├── index.html              # Índice principal de documentación
-├── modulo-1/               # Guías del Módulo 1
-│   ├── 00-vision-general.html
-│   ├── 01-lambda-hardcoded.html
-│   ├── 02-dynamodb-table.html
-│   ├── 03-s3-imagenes.html
-│   ├── 04-api-gateway.html
-│   └── ejercicio-opcional-s3-trigger.html
-├── styles/                 # CSS con branding Goikode
-├── scripts/                # JavaScript para prefijos dinámicos
-└── assets/                 # Logo y recursos
+├── docs/
+│   ├── index.html              # Índice principal de documentación
+│   ├── modulo-1a-consola/      # Módulo 1.A: Desarrollo con Consola AWS
+│   │   ├── 00-vision-general.html
+│   │   ├── 01-lambda-hardcoded.html
+│   │   ├── 02-dynamodb-table.html
+│   │   ├── 03-s3-imagenes.html
+│   │   ├── 04-api-gateway.html
+│   │   └── ejercicio-opcional-s3-trigger.html
+│   ├── modulo-1b-sam/          # Módulo 1.B: SAM (IaC)
+│   │   ├── 00-plan-pedagogico.html
+│   │   ├── 01-introduccion-sam.html
+│   │   ├── 02-workflow-sam.html
+│   │   └── 03-post-vinilos.html
+│   ├── styles/                 # CSS con branding Goikode
+│   ├── scripts/                # JavaScript para prefijos dinámicos
+│   └── assets/                 # Logo y recursos
+├── src/                        # Código fuente (en ramas específicas)
+└── README.md
 ```
 
 ## 🎯 Tu Prefijo Único

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>00 Plan Pedagogico - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">00 Plan Pedagogico</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="plan-pedagogico-migracion-a-sam">Plan Pedagógico: Migración a SAM</h1>
+<h2 id="estrategia-de-ensenanza-infrastructure-as-code">Estrategia de Enseñanza Infrastructure as Code</h2>
+<hr />
+<h2 id="objetivos-de-aprendizaje">🎯 Objetivos de Aprendizaje</h2>
+<p>Al finalizar esta sección de SAM, los estudiantes serán capaces de:</p>
+<ol>
+<li>
+<p><strong>Conceptual</strong>:<br />
+   - ✅ Entender qué es Infrastructure as Code (IaC) y por qué es importante<br />
+   - ✅ Conocer las ventajas de SAM vs despliegue manual en consola<br />
+   - ✅ Comprender el workflow de desarrollo con SAM</p>
+</li>
+<li>
+<p><strong>Práctico</strong>:<br />
+   - ✅ Desplegar una aplicación SAM completa desde cero<br />
+   - ✅ Modificar templates SAM para añadir recursos<br />
+   - ✅ Usar comandos SAM CLI (build, deploy, logs)<br />
+   - ✅ Troubleshooting de errores comunes en deploys</p>
+</li>
+</ol>
+<hr />
+<h2 id="estrategia-pedagogica">📋 Estrategia Pedagógica</h2>
+<h3 id="fase-1-base-proporcionada-get-endpoint">Fase 1: Base Proporcionada (GET Endpoint)</h3>
+<p><strong>Duración</strong>: 45 minutos</p>
+<p><strong>Instructor proporciona</strong>:<br />
+- ✅ Template SAM completo con GET /vinilos<br />
+- ✅ Handler Lambda funcional<br />
+- ✅ DynamoDB table definida<br />
+- ✅ S3 bucket configurado<br />
+- ✅ Scripts de seed<br />
+- ✅ README con instrucciones precisas</p>
+<p><strong>Estudiantes hacen</strong>:<br />
+1. Checkout de rama <code>modulo-1-base</code><br />
+2. Leer y entender el template SAM<br />
+3. Ejecutar <code>sam build</code><br />
+4. Ejecutar <code>sam deploy --guided</code> (copy-paste comandos)<br />
+5. Verificar que funciona (curl a API)<br />
+6. Ver logs con <code>sam logs</code><br />
+7. Poblar DynamoDB con script de seed</p>
+<p><strong>Resultado esperado</strong>:<br />
+- ✅ Stack desplegado en AWS<br />
+- ✅ API funcionando (GET /vinilos devuelve datos)<br />
+- ✅ Estudiantes entienden workflow básico<br />
+- ✅ Confianza en que SAM "funciona"</p>
+<hr />
+<h3 id="fase-2-explicacion-conceptual">Fase 2: Explicación Conceptual</h3>
+<p><strong>Duración</strong>: 20 minutos (presentación instructor)</p>
+<p><strong>Temas a cubrir</strong>:<br />
+1. <strong>¿Qué es IaC?</strong><br />
+   - Manual vs automatizado<br />
+   - Reproducibilidad<br />
+   - Version control</p>
+<ol start="2">
+<li>
+<p><strong>¿Por qué SAM?</strong><br />
+   - Simplifica CloudFormation<br />
+   - Abstracciones serverless<br />
+   - Policy templates<br />
+   - Testing local</p>
+</li>
+<li>
+<p><strong>Anatomía del Template</strong>:<br />
+   - <code>Transform</code>, <code>Parameters</code>, <code>Globals</code><br />
+   - <code>Resources</code> (Function, HttpApi, Table, Bucket)<br />
+   - <code>Policies</code> (SAM policy templates)<br />
+   - <code>Events</code> (triggers automáticos)<br />
+   - <code>Outputs</code></p>
+</li>
+<li>
+<p><strong>Workflow de Desarrollo</strong>:<br />
+<code>Código → sam build → sam deploy → Probar → Logs
+     ↑                                              |
+     └──────────────────────────────────────────────┘</code></p>
+</li>
+<li>
+<p><strong>Ventajas sobre Consola</strong>:<br />
+   - Tiempo: 70min (consola) → 3min (SAM)<br />
+   - Reproducible<br />
+   - Versionable<br />
+   - Transaccional (rollback automático)</p>
+</li>
+</ol>
+<hr />
+<h3 id="fase-3-ejercicio-guiado-anadir-post-endpoint">Fase 3: Ejercicio Guiado - Añadir POST Endpoint</h3>
+<p><strong>Duración</strong>: 30 minutos</p>
+<p><strong>Documentación proporciona</strong>:<br />
+- ✅ Pasos exactos con copy-paste<br />
+- ✅ Código del handler completo<br />
+- ✅ Fragmentos de template YAML a añadir<br />
+- ✅ Comandos exactos a ejecutar<br />
+- ✅ Output esperado en cada paso</p>
+<p><strong>Estudiantes hacen</strong> (paso a paso):<br />
+1. Crear directorio <code>src/handlers/create-vinilo/</code><br />
+2. Copiar código del handler (copy-paste desde docs)<br />
+3. Crear <code>package.json</code> (copy-paste)<br />
+4. Instalar dependencias: <code>npm install</code><br />
+5. Añadir función al template (copy-paste fragmento YAML)<br />
+6. Ejecutar <code>sam build</code><br />
+7. Ejecutar <code>sam deploy</code> (sin --guided, usa config guardada)<br />
+8. Probar con curl (copy-paste comando)<br />
+9. Verificar logs</p>
+<p><strong>Resultado esperado</strong>:<br />
+- ✅ POST /vinilos funciona<br />
+- ✅ Estudiantes vieron workflow completo de actualización<br />
+- ✅ Entienden cómo añadir recursos nuevos</p>
+<hr />
+<h3 id="fase-4-ejercicio-opcional-get-vinilosid">Fase 4: Ejercicio Opcional - GET /vinilos/{id}</h3>
+<p><strong>Duración</strong>: 20 minutos (homework)</p>
+<p><strong>Documentación proporciona</strong>:<br />
+- ✅ Descripción del objetivo<br />
+- ✅ Pistas sobre qué cambiar<br />
+- ✅ Código handler con TODOs<br />
+- ✅ Fragmento template incompleto (deben completar)</p>
+<p><strong>Estudiantes hacen</strong> (más autónomo):<br />
+1. Crear nuevo handler <code>get-vinilo-by-id</code><br />
+2. Modificar código para usar <code>GetCommand</code> (DynamoDB)<br />
+3. Añadir función al template (copiar de CreateVinilo y adaptar)<br />
+4. Configurar ruta <code>/vinilos/{id}</code> en API Gateway<br />
+5. Pasar <code>{id}</code> del path a Lambda<br />
+6. Deploy y probar</p>
+<p><strong>Resultado esperado</strong>:<br />
+- ✅ Estudiantes aplican conocimientos sin tanto copy-paste<br />
+- ✅ Resuelven problemas por sí mismos (con pistas)<br />
+- ✅ Refuerzan aprendizaje</p>
+<hr />
+<h2 id="estructura-de-archivos-en-rama-modulo-1-base">📂 Estructura de Archivos en Rama <code>modulo-1-base</code></h2>
+<div class="highlight"><pre><span></span><code><span class="n">modulo</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">functional</span><span class="o">/</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">sam</span><span class="o">-</span><span class="n">example</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">template</span><span class="o">.</span><span class="n">yaml</span><span class="w">              </span><span class="c1"># ✅ Template completo (GET endpoint)</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">samconfig</span><span class="o">.</span><span class="n">toml</span><span class="o">.</span><span class="n">example</span><span class="w">     </span><span class="c1"># ✅ Template de configuración</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">README</span><span class="o">.</span><span class="n">md</span><span class="w">                  </span><span class="c1"># 📖 Instrucciones detalladas de deploy</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">src</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">handlers</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">       </span><span class="err">└──</span><span class="w"> </span><span class="n">get</span><span class="o">-</span><span class="n">vinilos</span><span class="o">/</span><span class="w">       </span><span class="c1"># ✅ Handler completo</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">           </span><span class="err">├──</span><span class="w"> </span><span class="n">index</span><span class="o">.</span><span class="n">js</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">           </span><span class="err">└──</span><span class="w"> </span><span class="n">package</span><span class="o">.</span><span class="n">json</span>
+<span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">scripts</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="nb">seed</span><span class="o">-</span><span class="n">dynamodb</span><span class="o">.</span><span class="n">js</span><span class="w">       </span><span class="c1"># ✅ Script para poblar datos</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">├──</span><span class="w"> </span><span class="n">upload</span><span class="o">-</span><span class="n">images</span><span class="o">.</span><span class="n">sh</span><span class="w">       </span><span class="c1"># ✅ Script para subir imágenes</span>
+<span class="err">│</span><span class="w">   </span><span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="n">package</span><span class="o">.</span><span class="n">json</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="o">.</span><span class="n">gitignore</span>
+<span class="err">│</span>
+<span class="err">├──</span><span class="w"> </span><span class="n">docs</span><span class="o">/</span>
+<span class="err">│</span><span class="w">   </span><span class="err">└──</span><span class="w"> </span><span class="mi">1</span><span class="n">b</span><span class="o">-</span><span class="n">sam</span><span class="o">/</span>
+<span class="err">│</span><span class="w">       </span><span class="err">├──</span><span class="w"> </span><span class="mi">01</span><span class="o">-</span><span class="n">introduccion</span><span class="o">-</span><span class="n">sam</span><span class="o">.</span><span class="n">md</span><span class="w">      </span><span class="c1"># 📖 Conceptos IaC y SAM</span>
+<span class="err">│</span><span class="w">       </span><span class="err">├──</span><span class="w"> </span><span class="mi">02</span><span class="o">-</span><span class="n">despliegue</span><span class="o">-</span><span class="n">base</span><span class="o">.</span><span class="n">md</span><span class="w">       </span><span class="c1"># 📖 Deploy paso a paso (copy-paste)</span>
+<span class="err">│</span><span class="w">       </span><span class="err">├──</span><span class="w"> </span><span class="mi">03</span><span class="o">-</span><span class="n">ejercicio</span><span class="o">-</span><span class="n">post</span><span class="o">.</span><span class="n">md</span><span class="w">        </span><span class="c1"># 📖 Añadir POST (guiado)</span>
+<span class="err">│</span><span class="w">       </span><span class="err">└──</span><span class="w"> </span><span class="mi">04</span><span class="o">-</span><span class="n">ejercicio</span><span class="o">-</span><span class="n">get</span><span class="o">-</span><span class="n">by</span><span class="o">-</span><span class="n">id</span><span class="o">.</span><span class="n">md</span><span class="w">   </span><span class="c1"># 📖 GET by ID (menos guiado)</span>
+</code></pre></div>
+
+<hr />
+<h2 id="documentacion-a-crear">📝 Documentación a Crear</h2>
+<h3 id="1-02-despliegue-basemd-nuevo">1. <code>02-despliegue-base.md</code> (NUEVO)</h3>
+<p><strong>Contenido</strong>:<br />
+- Prerequisitos (SAM CLI, AWS CLI, Node.js)<br />
+- Checkout de rama<br />
+- Explicación del template (sección por sección)<br />
+- Comandos exactos para:<br />
+  - Configurar prefijo en samconfig.toml<br />
+  - Crear bucket de deployment<br />
+  - <code>sam build</code> (qué hace, output esperado)<br />
+  - <code>sam deploy --guided</code> (captura de cada pregunta)<br />
+  - Probar con curl (comando exacto)<br />
+  - Ver logs (comando exacto)<br />
+  - Poblar DynamoDB (comando exacto)<br />
+- Troubleshooting común<br />
+- Checklist de verificación</p>
+<h3 id="2-03-ejercicio-postmd-reescribir">2. <code>03-ejercicio-post.md</code> (REESCRIBIR)</h3>
+<p><strong>Cambios respecto a versión actual</strong>:<br />
+- ✅ Más enfocado en copy-paste exacto<br />
+- ✅ Fragmentos de código con números de línea<br />
+- ✅ "Copia este bloque y pégalo en línea X"<br />
+- ✅ Output esperado en cada paso<br />
+- ✅ Capturas de pantalla de errores comunes<br />
+- ✅ Validación después de cada paso</p>
+<h3 id="3-04-ejercicio-get-by-idmd-nuevo">3. <code>04-ejercicio-get-by-id.md</code> (NUEVO)</h3>
+<p><strong>Contenido</strong>:<br />
+- Objetivo del ejercicio<br />
+- Pistas en lugar de solución completa<br />
+- Handler con TODOs:<br />
+<code>javascript
+  // TODO: Obtén el parámetro {id} del path
+  // TODO: Usa GetCommand en lugar de ScanCommand
+  // TODO: Maneja caso cuando no existe (404)</code><br />
+- Template con espacios a completar<br />
+- Tests para verificar que funciona<br />
+- Solución al final (colapsable)</p>
+<hr />
+<h2 id="puntos-clave-de-ensenanza">🎯 Puntos Clave de Enseñanza</h2>
+<h3 id="lo-que-si-debe-enfatizarse">Lo que SÍ debe enfatizarse:</h3>
+<ol>
+<li>
+<p><strong>IaC elimina trabajo manual repetitivo</strong><br />
+   - Comparación directa: 70min consola vs 3min SAM</p>
+</li>
+<li>
+<p><strong>Reproducibilidad = Profesionalismo</strong><br />
+   - Mismo template → Mismo resultado (dev, prod, otro alumno)</p>
+</li>
+<li>
+<p><strong>Git-friendly</strong><br />
+   - <code>git diff template.yaml</code> muestra exactamente qué cambió<br />
+   - Rollback fácil: <code>git checkout HEAD~1 template.yaml</code></p>
+</li>
+<li>
+<p><strong>SAM Policy Templates son mágicos</strong><br />
+   - Compara JSON IAM manual vs <code>DynamoDBReadPolicy</code><br />
+   - "SAM sabe qué permisos necesitas"</p>
+</li>
+<li>
+<p><strong>Workflow iterativo</strong><br />
+   - Cambiar código → build → deploy → probar<br />
+   - Es rápido (30-60 segundos para updates)</p>
+</li>
+</ol>
+<h3 id="lo-que-no-debe-enfatizarse-todavia">Lo que NO debe enfatizarse (todavía):</h3>
+<ul>
+<li>❌ Detalles de CloudFormation subyacente</li>
+<li>❌ Optimización avanzada (capas, tamaños, etc.)</li>
+<li>❌ CI/CD pipelines</li>
+<li>❌ Testing exhaustivo</li>
+<li>❌ Multi-region, multi-stage complejo</li>
+</ul>
+<hr />
+<h2 id="criterios-de-exito">✅ Criterios de Éxito</h2>
+<p>Un estudiante ha completado exitosamente esta sección si:</p>
+<ol>
+<li>
+<p><strong>Despliegue</strong>:<br />
+   - [ ] Stack desplegado sin errores<br />
+   - [ ] API Gateway devuelve 200 en GET /vinilos<br />
+   - [ ] DynamoDB tiene datos (seed ejecutado)<br />
+   - [ ] S3 tiene imágenes</p>
+</li>
+<li>
+<p><strong>Comprensión</strong>:<br />
+   - [ ] Puede explicar qué hace cada sección del template<br />
+   - [ ] Entiende diferencia entre GET (Scan) y POST (PutItem)<br />
+   - [ ] Sabe cuándo usar <code>sam build</code> vs <code>sam deploy</code></p>
+</li>
+<li>
+<p><strong>Autonomía</strong>:<br />
+   - [ ] Completó ejercicio POST sin errores<br />
+   - [ ] Intentó ejercicio GET by ID (aunque no lo complete)<br />
+   - [ ] Sabe buscar logs cuando algo falla</p>
+</li>
+</ol>
+<hr />
+<h2 id="tiempo-total-estimado">📊 Tiempo Total Estimado</h2>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Duración</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fase 1: Deploy base</td>
+<td>45 min</td>
+<td>Guiado (instructor presente)</td>
+</tr>
+<tr>
+<td>Fase 2: Explicación</td>
+<td>20 min</td>
+<td>Presentación</td>
+</tr>
+<tr>
+<td>Fase 3: POST endpoint</td>
+<td>30 min</td>
+<td>Guiado (copy-paste)</td>
+</tr>
+<tr>
+<td>Fase 4: GET by ID</td>
+<td>20 min</td>
+<td>Homework (autónomo)</td>
+</tr>
+<tr>
+<td><strong>Total en clase</strong></td>
+<td><strong>95 min</strong></td>
+<td><strong>~1.5 horas</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="proximos-pasos-implementacion">🚀 Próximos Pasos (Implementación)</h2>
+<ol>
+<li>✅ Crear rama <code>modulo-1-base</code> con código completo GET</li>
+<li>✅ Reescribir <code>02-despliegue-base.md</code> con copy-paste preciso</li>
+<li>✅ Reescribir <code>03-ejercicio-post.md</code> más guiado</li>
+<li>✅ Crear <code>04-ejercicio-get-by-id.md</code> menos guiado</li>
+<li>✅ Probar toda la secuencia de principio a fin</li>
+<li>✅ Capturar screenshots de errores comunes</li>
+<li>✅ Crear checklist de verificación para instructor</li>
+</ol>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>
