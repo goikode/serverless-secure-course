@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iteración 2: Añadir DynamoDB - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">Iteración 2: Añadir DynamoDB</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="iteracion-2-anadir-dynamodb">Iteración 2: Añadir DynamoDB</h1>
+<h2 id="migrar-de-datos-hardcoded-a-base-de-datos-nosql">Migrar de Datos Hardcoded a Base de Datos NoSQL</h2>
+<hr />
+<h2 id="objetivo">🎯 Objetivo</h2>
+<p>Crear una tabla en DynamoDB, insertar los 5 vinilos, y modificar la Lambda para leer los datos desde la base de datos en lugar de tenerlos hardcoded.</p>
+<hr />
+<h2 id="conceptos-clave">📚 Conceptos Clave</h2>
+<h3 id="que-es-dynamodb">¿Qué es DynamoDB?</h3>
+<p><strong>DynamoDB</strong> es una base de datos NoSQL (no relacional) completamente gestionada por AWS:</p>
+<ul>
+<li>✅ <strong>Serverless</strong>: Sin servidores que aprovisionar</li>
+<li>✅ <strong>Escalado automático</strong>: De 0 a millones de peticiones/segundo</li>
+<li>✅ <strong>Rendimiento</strong>: Latencia de milisegundos</li>
+<li>✅ <strong>Flexible</strong>: No requiere esquema fijo</li>
+<li>✅ <strong>Alta disponibilidad</strong>: Replicación automática en 3 AZs</li>
+</ul>
+<h3 id="conceptos-fundamentales">Conceptos Fundamentales</h3>
+<table>
+<thead>
+<tr>
+<th>Concepto SQL</th>
+<th>Concepto DynamoDB</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tabla</td>
+<td>Tabla</td>
+<td>Colección de datos</td>
+</tr>
+<tr>
+<td>Fila</td>
+<td>Item</td>
+<td>Un registro individual</td>
+</tr>
+<tr>
+<td>Columna</td>
+<td>Atributo</td>
+<td>Un campo del registro</td>
+</tr>
+<tr>
+<td>Primary Key</td>
+<td>Partition Key</td>
+<td>Identificador único</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operaciones-comunes">Operaciones Comunes</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// SCAN: Leer TODOS los items (caro, evitar en producción)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">ScanCommand</span><span class="p">({</span><span class="w"> </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;tabla&#39;</span><span class="w"> </span><span class="p">}));</span>
+
+<span class="c1">// QUERY: Buscar items por clave (eficiente)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">item</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">QueryCommand</span><span class="p">({...}));</span>
+
+<span class="c1">// PUT: Insertar o actualizar item</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">PutCommand</span><span class="p">({</span><span class="w"> </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;tabla&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">Item</span><span class="o">:</span><span class="w"> </span><span class="p">{...}</span><span class="w"> </span><span class="p">}));</span>
+
+<span class="c1">// DELETE: Eliminar item</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">DeleteCommand</span><span class="p">({...}));</span>
+</code></pre></div>
+
+<hr />
+<h2 id="parte-1-crear-tabla-dynamodb">🛠️ Parte 1: Crear Tabla DynamoDB</h2>
+<h3 id="paso-1-navegar-a-dynamodb"><strong>Paso 1: Navegar a DynamoDB</strong></h3>
+<ol>
+<li>En la consola AWS, busca <strong>"DynamoDB"</strong></li>
+<li>Haz clic en <strong>"DynamoDB"</strong> (servicio)</li>
+<li>En el menú lateral izquierdo, haz clic en <strong>"Tables"</strong></li>
+</ol>
+<hr />
+<h3 id="paso-2-crear-la-tabla"><strong>Paso 2: Crear la Tabla</strong></h3>
+<ol>
+<li>
+<p>Haz clic en <strong>"Create table"</strong> (botón naranja)</p>
+</li>
+<li>
+<p><strong>Configuración básica</strong>:<br />
+   - <strong>Table name</strong>: <code>{tu-prefijo}-vinilos</code></p>
+<ul>
+<li>Ejemplo: <code>juan-perez-vinilos</code></li>
+<li><strong>Partition key</strong>: <code>id</code> (tipo: <code>String</code>)</li>
+<li>Deja <strong>Sort key</strong> vacío (no lo necesitamos)</li>
+</ul>
+</li>
+<li>
+<p><strong>Table settings</strong>:<br />
+   - Selecciona <strong>"Customize settings"</strong></p>
+</li>
+<li>
+<p><strong>Read/write capacity settings</strong>:<br />
+   - Selecciona <strong>"On-demand"</strong> (pago por uso, más simple)<br />
+   - Deja el resto de opciones por defecto</p>
+</li>
+<li>
+<p><strong>Encryption at rest</strong>:<br />
+   - Deja <strong>"Owned by Amazon DynamoDB"</strong> (gratuito)</p>
+</li>
+<li>
+<p>Haz clic en <strong>"Create table"</strong></p>
+</li>
+</ol>
+<p>⏱️ La tabla tardará unos 30 segundos en estar disponible. Espera a que el estado sea <strong>"Active"</strong> (se actualizará automáticamente).</p>
+<hr />
+<h3 id="paso-3-insertar-items-manualmente"><strong>Paso 3: Insertar Items Manualmente</strong></h3>
+<p>Una vez la tabla esté activa:</p>
+<ol>
+<li>Haz clic en el nombre de tu tabla (<code>{prefijo}-vinilos</code>)</li>
+<li>Ve a la pestaña <strong>"Explore table items"</strong></li>
+<li>Haz clic en <strong>"Create item"</strong> (botón naranja)</li>
+</ol>
+<h4 id="item-1-abbey-road"><strong>Item 1: Abbey Road</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Abbey Road&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The Beatles&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">25.99</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1969</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Cómo insertarlo</strong>:<br />
+- Haz clic en "Add new attribute" → <strong>String</strong> → Nombre: <code>titulo</code> → Valor: <code>Abbey Road</code><br />
+- Haz clic en "Add new attribute" → <strong>String</strong> → Nombre: <code>artista</code> → Valor: <code>The Beatles</code><br />
+- Haz clic en "Add new attribute" → <strong>Number</strong> → Nombre: <code>precio</code> → Valor: <code>25.99</code><br />
+- Haz clic en "Add new attribute" → <strong>Number</strong> → Nombre: <code>año</code> → Valor: <code>1969</code><br />
+- Haz clic en <strong>"Create item"</strong></p>
+<h4 id="item-2-dark-side-of-the-moon"><strong>Item 2: Dark Side of the Moon</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Dark Side of the Moon&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Pink Floyd&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">22.50</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1973</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Repite el proceso con estos valores.</p>
+<h4 id="item-3-thriller"><strong>Item 3: Thriller</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Thriller&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Michael Jackson&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">19.99</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1982</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="item-4-songs-of-leonard-cohen"><strong>Item 4: Songs of Leonard Cohen</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Songs of Leonard Cohen&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Leonard Cohen&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">23.50</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1967</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="item-5-naturally-shades"><strong>Item 5: Naturally (Shades)</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Naturally (Shades)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;J.J. Cale&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">21.99</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1971</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="paso-4-verificar-los-items"><strong>Paso 4: Verificar los Items</strong></h3>
+<p>En la pestaña <strong>"Explore table items"</strong>, deberías ver los 5 vinilos listados.</p>
+<hr />
+<h2 id="parte-2-conectar-lambda-con-dynamodb">🛠️ Parte 2: Conectar Lambda con DynamoDB</h2>
+<h3 id="paso-1-dar-permisos-a-lambda-iam"><strong>Paso 1: Dar Permisos a Lambda (IAM)</strong></h3>
+<p>Lambda necesita permisos para leer de DynamoDB.</p>
+<ol>
+<li>Ve a la consola de <strong>Lambda</strong></li>
+<li>Abre tu función <code>{prefijo}-get-vinilos</code></li>
+<li>Ve a la pestaña <strong>"Configuration"</strong></li>
+<li>En el menú lateral, haz clic en <strong>"Permissions"</strong></li>
+<li>En <strong>"Execution role"</strong>, verás un rol con nombre similar a:<br />
+   - <code>{prefijo}-get-vinilos-role-xxxxx</code></li>
+<li>Haz clic en el nombre del rol (te llevará a IAM)</li>
+</ol>
+<h4 id="anadir-politica-de-permisos">Añadir política de permisos</h4>
+<ol>
+<li>En IAM, haz clic en <strong>"Add permissions"</strong> → <strong>"Attach policies"</strong></li>
+<li>En el buscador, escribe <strong>"DynamoDB"</strong></li>
+<li>Selecciona <strong>"AmazonDynamoDBReadOnlyAccess"</strong><br />
+   - ⚠️ En producción usaríamos permisos más restrictivos (least privilege)</li>
+<li>Haz clic en <strong>"Add permissions"</strong></li>
+</ol>
+<p>✅ Ahora Lambda puede leer de DynamoDB.</p>
+<hr />
+<h3 id="paso-2-actualizar-el-codigo-de-lambda"><strong>Paso 2: Actualizar el Código de Lambda</strong></h3>
+<p>Vuelve a la función Lambda (<code>{prefijo}-get-vinilos</code>):</p>
+<ol>
+<li>Ve a la pestaña <strong>"Code"</strong></li>
+<li><strong>Reemplaza todo el código</strong> por:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1">// AWS SDK v3 - DynamoDB Document Client</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/client-dynamodb&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">,</span><span class="w"> </span><span class="nx">ScanCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/lib-dynamodb&quot;</span><span class="p">);</span>
+
+<span class="c1">// Configurar cliente DynamoDB</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="p">({</span><span class="w"> </span><span class="nx">region</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">docClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">client</span><span class="p">);</span>
+
+<span class="c1">// IMPORTANTE: Cambiar por tu nombre de tabla</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TU-PREFIJO-vinilos&quot;</span><span class="p">;</span><span class="w">  </span><span class="c1">// ⚠️ MODIFICAR AQUÍ</span>
+
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Lambda invocada - GET vinilos desde DynamoDB&#39;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Escanear todos los items de la tabla</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ScanCommand</span><span class="p">({</span>
+<span class="w">            </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span>
+<span class="w">        </span><span class="p">});</span>
+
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">command</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">vinilos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">Items</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Se encontraron </span><span class="si">${</span><span class="nx">vinilos</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="sb"> vinilos`</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// Respuesta HTTP</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">200</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                </span><span class="nx">mensaje</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Catálogo de vinilos desde DynamoDB&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">total</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilos</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">vinilos</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilos</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Error al leer DynamoDB:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Error al obtener vinilos&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">detalle</span><span class="o">:</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>⚠️ IMPORTANTE</strong>: En la línea 11, cambia <code>"TU-PREFIJO-vinilos"</code> por el nombre real de tu tabla.<br />
+   - Ejemplo: <code>"juan-perez-vinilos"</code></p>
+</li>
+<li>
+<p>Haz clic en <strong>"Deploy"</strong></p>
+</li>
+</ol>
+<hr />
+<h3 id="paso-3-probar-la-funcion"><strong>Paso 3: Probar la Función</strong></h3>
+<ol>
+<li>Ve a la pestaña <strong>"Test"</strong></li>
+<li>Usa el evento de prueba existente (<code>test-get-vinilos</code>)</li>
+<li>Haz clic en <strong>"Test"</strong></li>
+</ol>
+<h4 id="resultado-esperado">✅ Resultado Esperado</h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;statusCode&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;headers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;Content-Type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{\&quot;mensaje\&quot;:\&quot;Catálogo de vinilos desde DynamoDB\&quot;,\&quot;total\&quot;:5,\&quot;vinilos\&quot;:[...]}&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="logs">📝 Logs</h4>
+<p>Deberías ver:</p>
+<div class="highlight"><pre><span></span><code>Lambda invocada - GET vinilos desde DynamoDB
+Se encontraron 5 vinilos
+</code></pre></div>
+
+<hr />
+<h2 id="analisis-del-codigo">🔍 Análisis del Código</h2>
+<h3 id="aws-sdk-v3">AWS SDK v3</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/client-dynamodb&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">,</span><span class="w"> </span><span class="nx">ScanCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/lib-dynamodb&quot;</span><span class="p">);</span>
+</code></pre></div>
+
+<ul>
+<li><strong>SDK v3</strong>: Versión modular (solo importas lo que necesitas)</li>
+<li><strong>DynamoDBDocumentClient</strong>: Simplifica el manejo de tipos de DynamoDB</li>
+<li><strong>ScanCommand</strong>: Operación para leer todos los items</li>
+</ul>
+<h3 id="operacion-scan">Operación Scan</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ScanCommand</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">command</span><span class="p">);</span>
+</code></pre></div>
+
+<ul>
+<li>⚠️ <strong>Scan</strong> lee TODA la tabla (ineficiente con muchos datos)</li>
+<li>✅ Útil para tablas pequeñas o prototipos</li>
+<li>💡 En producción, usa <strong>Query</strong> con índices</li>
+</ul>
+<h3 id="manejo-de-errores">Manejo de Errores</h3>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Código que puede fallar</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Error:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="p">})</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<ul>
+<li>✅ Siempre envuelve operaciones de red en try/catch</li>
+<li>✅ Devuelve códigos HTTP apropiados (500 = error del servidor)</li>
+<li>✅ Logea errores para debugging</li>
+</ul>
+<hr />
+<h2 id="que-has-aprendido">🎓 ¿Qué has Aprendido?</h2>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DynamoDB</strong></td>
+<td>Base de datos NoSQL serverless</td>
+</tr>
+<tr>
+<td><strong>Partition Key</strong></td>
+<td>Clave primaria (única por item)</td>
+</tr>
+<tr>
+<td><strong>Item</strong></td>
+<td>Un registro en DynamoDB (equivalente a "fila" en SQL)</td>
+</tr>
+<tr>
+<td><strong>Atributo</strong></td>
+<td>Un campo del item (equivalente a "columna")</td>
+</tr>
+<tr>
+<td><strong>Scan</strong></td>
+<td>Leer todos los items de una tabla</td>
+</tr>
+<tr>
+<td><strong>IAM Role</strong></td>
+<td>Permisos que tiene la Lambda</td>
+</tr>
+<tr>
+<td><strong>AWS SDK v3</strong></td>
+<td>Librería para interactuar con servicios AWS</td>
+</tr>
+<tr>
+<td><strong>DynamoDB Document Client</strong></td>
+<td>Simplifica operaciones CRUD</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="comparativa-hardcoded-vs-dynamodb">📊 Comparativa: Hardcoded vs DynamoDB</h2>
+<table>
+<thead>
+<tr>
+<th>Aspecto</th>
+<th>Hardcoded</th>
+<th>DynamoDB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Escalabilidad</strong></td>
+<td>Limitada (código)</td>
+<td>Infinita</td>
+</tr>
+<tr>
+<td><strong>Mantenimiento</strong></td>
+<td>Redeploy para cambios</td>
+<td>Actualizar DB sin redeploy</td>
+</tr>
+<tr>
+<td><strong>Persistencia</strong></td>
+<td>Solo en código</td>
+<td>Datos persistentes</td>
+</tr>
+<tr>
+<td><strong>Costo</strong></td>
+<td>Solo Lambda</td>
+<td>Lambda + DynamoDB (barato)</td>
+</tr>
+<tr>
+<td><strong>Latencia</strong></td>
+<td>~10ms</td>
+<td>~50-100ms (red)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ejercicios-opcional">🧪 Ejercicios (Opcional)</h2>
+<ol>
+<li><strong>Añade un vinilo más</strong> directamente en DynamoDB y prueba la Lambda</li>
+<li><strong>Modifica la Lambda</strong> para ordenar vinilos por precio (usa <code>sort()</code>)</li>
+<li><strong>Añade filtros</strong>: Devuelve solo vinilos de un artista específico</li>
+<li><strong>Manejo de errores</strong>: ¿Qué pasa si cambias el nombre de la tabla a uno incorrecto?</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="error-user-is-not-authorized-to-perform-dynamodbscan">Error: "User is not authorized to perform: dynamodb:Scan"</h3>
+<p><strong>Causa</strong>: El rol IAM de Lambda no tiene permisos.</p>
+<p><strong>Solución</strong>:<br />
+1. Verifica que añadiste la política <code>AmazonDynamoDBReadOnlyAccess</code><br />
+2. Espera 10-15 segundos y vuelve a probar (propagación de permisos)</p>
+<hr />
+<h3 id="error-cannot-find-module-aws-sdkclient-dynamodb">Error: "Cannot find module @aws-sdk/client-dynamodb"</h3>
+<p><strong>Causa</strong>: AWS SDK v3 no está incluido en el runtime (muy raro, debería estar).</p>
+<p><strong>Solución</strong>:<br />
+- Verifica que seleccionaste <code>Node.js 20.x</code> (incluye SDK v3)<br />
+- En versiones antiguas de Node.js (&lt;18) necesitas empaquetar el SDK</p>
+<hr />
+<h3 id="error-requested-resource-not-found">Error: "Requested resource not found"</h3>
+<p><strong>Causa</strong>: El nombre de la tabla en el código no coincide con el nombre real.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a DynamoDB y copia el nombre exacto de tu tabla<br />
+2. Pégalo en <code>TABLE_NAME</code> (línea 11 del código)<br />
+3. Haz clic en "Deploy" de nuevo</p>
+<hr />
+<h3 id="la-funcion-devuelve-0-vinilos">La función devuelve 0 vinilos</h3>
+<p><strong>Causa</strong>: La tabla está vacía o el nombre es incorrecto.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a DynamoDB → Tu tabla → "Explore table items"<br />
+2. Verifica que los 5 items existen<br />
+3. Comprueba que el nombre de la tabla es correcto en Lambda</p>
+<hr />
+<h2 id="checklist-de-verificacion">✅ Checklist de Verificación</h2>
+<p>Antes de continuar, comprueba:</p>
+<ul>
+<li>[ ] Tabla DynamoDB creada: <code>{prefijo}-vinilos</code></li>
+<li>[ ] 5 items insertados en la tabla</li>
+<li>[ ] Rol IAM tiene permisos de lectura DynamoDB</li>
+<li>[ ] Código Lambda actualizado con el nombre correcto de la tabla</li>
+<li>[ ] Test ejecutado exitosamente devolviendo 5 vinilos</li>
+<li>[ ] Logs muestran "Se encontraron 5 vinilos"</li>
+</ul>
+<hr />
+<p><strong>Siguiente</strong>: <a href="./03-s3-imagenes.html">Iteración 3 - Añadir S3 para Imágenes</a></p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>

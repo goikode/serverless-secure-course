@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicio Opcional (Homework): S3 Trigger + Lambda + DynamoDB - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">Ejercicio Opcional (Homework): S3 Trigger + Lambda + DynamoDB</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="ejercicio-opcional-homework-s3-trigger-lambda-dynamodb">Ejercicio Opcional (Homework): S3 Trigger + Lambda + DynamoDB</h1>
+<h2 id="arquitectura-event-driven-para-procesamiento-de-datos">Arquitectura Event-Driven para Procesamiento de Datos</h2>
+<hr />
+<h2 id="objetivo">🎯 Objetivo</h2>
+<p>Aprender arquitectura <strong>event-driven</strong> (orientada a eventos) creando un pipeline automático:<br />
+1. Subir un archivo CSV a S3<br />
+2. S3 <strong>dispara automáticamente</strong> una Lambda<br />
+3. Lambda <strong>procesa el CSV</strong> y guarda los datos en DynamoDB</p>
+<p>Este ejercicio complementa los ejemplos en clase mostrando un <strong>patrón diferente</strong>: procesamiento asíncrono vs APIs síncronas.</p>
+<hr />
+<h2 id="conceptos-clave">📚 Conceptos Clave</h2>
+<h3 id="arquitectura-sincrona-clase-vs-asincrona-homework">Arquitectura Síncrona (Clase) vs Asíncrona (Homework)</h3>
+<h4 id="arquitectura-sincrona-api-gateway-lambda"><strong>Arquitectura Síncrona (API Gateway → Lambda)</strong></h4>
+<div class="highlight"><pre><span></span><code>Cliente HTTP → API Gateway → Lambda → DynamoDB
+             ↓
+        Respuesta inmediata
+</code></pre></div>
+
+<ul>
+<li>El cliente <strong>espera</strong> la respuesta</li>
+<li>Lambda se ejecuta <strong>bajo demanda</strong></li>
+<li>Uso: APIs REST, aplicaciones web</li>
+</ul>
+<h4 id="arquitectura-asincrona-s3-event-lambda"><strong>Arquitectura Asíncrona (S3 Event → Lambda)</strong></h4>
+<div class="highlight"><pre><span></span><code>Usuario sube CSV → S3 Bucket
+                    ↓ (Event Notification)
+                  Lambda (se ejecuta automáticamente)
+                    ↓
+                  DynamoDB
+</code></pre></div>
+
+<ul>
+<li>El usuario <strong>no espera</strong> respuesta</li>
+<li>Lambda se ejecuta <strong>automáticamente</strong> al detectar el evento</li>
+<li>Uso: ETL, procesamiento de archivos, pipelines de datos</li>
+</ul>
+<hr />
+<h2 id="comparacion-de-patrones">🆚 Comparación de Patrones</h2>
+<table>
+<thead>
+<tr>
+<th>Característica</th>
+<th>API Gateway + Lambda</th>
+<th>S3 Trigger + Lambda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Invocación</strong></td>
+<td>Síncrona (cliente espera)</td>
+<td>Asíncrona (automática)</td>
+</tr>
+<tr>
+<td><strong>Trigger</strong></td>
+<td>Petición HTTP</td>
+<td>Evento S3 (upload)</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>JSON inmediato</td>
+<td>No hay respuesta directa</td>
+</tr>
+<tr>
+<td><strong>Caso de uso</strong></td>
+<td>APIs REST</td>
+<td>Procesamiento batch</td>
+</tr>
+<tr>
+<td><strong>Timeout</strong></td>
+<td>Hasta 30s (API Gateway)</td>
+<td>Hasta 15 min (Lambda)</td>
+</tr>
+<tr>
+<td><strong>Ejemplo</strong></td>
+<td>GET /vinilos</td>
+<td>Upload CSV → procesar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="arquitectura-del-ejercicio">🏗️ Arquitectura del Ejercicio</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────┐
+│ Administrador (o script)            │
+│ Sube: vinilos-nuevos.csv            │
+└────────────┬────────────────────────┘
+             │ PUT Object
+             ↓
+┌─────────────────────────────────────┐
+│         S3 Bucket                    │
+│  {prefijo}-vinilos-csv              │
+│                                      │
+│  Event Notification:                │
+│  &quot;s3:ObjectCreated:*&quot;               │
+└────────────┬────────────────────────┘
+             │ (automático)
+             ↓
+┌─────────────────────────────────────┐
+│       Lambda Function                │
+│  {prefijo}-procesar-vinilos-csv     │
+│                                      │
+│  1. Lee CSV desde S3                │
+│  2. Parsea líneas                   │
+│  3. Valida datos                    │
+│  4. Inserta en DynamoDB (PutItem)   │
+└────────────┬────────────────────────┘
+             │ Write
+             ↓
+┌─────────────────────────────────────┐
+│         DynamoDB Table               │
+│      {prefijo}-vinilos              │
+│                                      │
+│  Items insertados automáticamente   │
+└─────────────────────────────────────┘
+</code></pre></div>
+
+<hr />
+<h2 id="parte-1-crear-bucket-s3-para-csv">🛠️ Parte 1: Crear Bucket S3 para CSV</h2>
+<h3 id="paso-1-crear-bucket"><strong>Paso 1: Crear Bucket</strong></h3>
+<ol>
+<li>Ve a <strong>S3</strong> en la consola AWS</li>
+<li>Haz clic en <strong>"Create bucket"</strong></li>
+<li><strong>Bucket name</strong>: <code>{tu-prefijo}-vinilos-csv</code><br />
+   - Ejemplo: <code>juan-perez-vinilos-csv</code></li>
+<li><strong>Region</strong>: <code>eu-west-1</code> (Ireland)</li>
+<li><strong>Block Public Access</strong>: ✅ Deja activado (este bucket es privado)</li>
+<li>Haz clic en <strong>"Create bucket"</strong></li>
+</ol>
+<p>✅ El bucket se crea instantáneamente.</p>
+<hr />
+<h2 id="parte-2-crear-lambda-de-procesamiento">🛠️ Parte 2: Crear Lambda de Procesamiento</h2>
+<h3 id="paso-1-crear-la-funcion-lambda"><strong>Paso 1: Crear la Función Lambda</strong></h3>
+<ol>
+<li>Ve a <strong>Lambda</strong> en la consola AWS</li>
+<li>Haz clic en <strong>"Create function"</strong></li>
+<li>Selecciona <strong>"Author from scratch"</strong></li>
+<li><strong>Function name</strong>: <code>{tu-prefijo}-procesar-vinilos-csv</code><br />
+   - Ejemplo: <code>juan-perez-procesar-vinilos-csv</code></li>
+<li><strong>Runtime</strong>: <code>Node.js 20.x</code></li>
+<li>Haz clic en <strong>"Create function"</strong></li>
+</ol>
+<hr />
+<h3 id="paso-2-codigo-de-la-lambda"><strong>Paso 2: Código de la Lambda</strong></h3>
+<p>Reemplaza el código por defecto con este:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">S3Client</span><span class="p">,</span><span class="w"> </span><span class="nx">GetObjectCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/client-s3&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/client-dynamodb&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">,</span><span class="w"> </span><span class="nx">PutCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;@aws-sdk/lib-dynamodb&quot;</span><span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">s3Client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">S3Client</span><span class="p">({</span><span class="w"> </span><span class="nx">region</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ddbClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">DynamoDBClient</span><span class="p">({</span><span class="w"> </span><span class="nx">region</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">docClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DynamoDBDocumentClient</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">ddbClient</span><span class="p">);</span>
+
+<span class="c1">// ⚠️ IMPORTANTE: Reemplaza con tu prefijo</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TU-PREFIJO-vinilos&quot;</span><span class="p">;</span>
+
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Lambda invocada por S3 event&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Event:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 1. Extraer información del evento S3</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">record</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">event</span><span class="p">.</span><span class="nx">Records</span><span class="p">[</span><span class="mf">0</span><span class="p">];</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">bucketName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">record</span><span class="p">.</span><span class="nx">s3</span><span class="p">.</span><span class="nx">bucket</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">objectKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">record</span><span class="p">.</span><span class="nx">s3</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">key</span><span class="p">;</span>
+
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Procesando archivo: </span><span class="si">${</span><span class="nx">objectKey</span><span class="si">}</span><span class="sb"> del bucket: </span><span class="si">${</span><span class="nx">bucketName</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 2. Leer el archivo CSV desde S3</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">getObjectCommand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">GetObjectCommand</span><span class="p">({</span>
+<span class="w">            </span><span class="nx">Bucket</span><span class="o">:</span><span class="w"> </span><span class="nx">bucketName</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Key</span><span class="o">:</span><span class="w"> </span><span class="nx">objectKey</span>
+<span class="w">        </span><span class="p">});</span>
+
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">s3Response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">s3Client</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">getObjectCommand</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">csvContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">streamToString</span><span class="p">(</span><span class="nx">s3Response</span><span class="p">.</span><span class="nx">Body</span><span class="p">);</span>
+
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;CSV content:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">csvContent</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 3. Parsear CSV (formato: id,titulo,artista,precio,año)</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">csvContent</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;\n&#39;</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">lines</span><span class="p">[</span><span class="mf">0</span><span class="p">];</span><span class="w"> </span><span class="c1">// Primera línea: encabezados</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">dataLines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">lines</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span><span class="w"> </span><span class="c1">// Resto: datos</span>
+
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`CSV tiene </span><span class="si">${</span><span class="nx">dataLines</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="sb"> registros (sin contar encabezado)`</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 4. Procesar cada línea e insertar en DynamoDB</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="nx">insertados</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="nx">errores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">line</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">dataLines</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">line</span><span class="p">.</span><span class="nx">trim</span><span class="p">())</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span><span class="w"> </span><span class="c1">// Saltar líneas vacías</span>
+
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">titulo</span><span class="p">,</span><span class="w"> </span><span class="nx">artista</span><span class="p">,</span><span class="w"> </span><span class="nx">precioStr</span><span class="p">,</span><span class="w"> </span><span class="nx">añoStr</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">line</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">).</span><span class="nx">map</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">trim</span><span class="p">());</span>
+
+<span class="w">            </span><span class="c1">// Validación básica</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">titulo</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">artista</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`Línea inválida (faltan campos): </span><span class="si">${</span><span class="nx">line</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">errores</span><span class="o">++</span><span class="p">;</span>
+<span class="w">                </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">vinilo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">titulo</span><span class="o">:</span><span class="w"> </span><span class="nx">titulo</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">artista</span><span class="o">:</span><span class="w"> </span><span class="nx">artista</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">precio</span><span class="o">:</span><span class="w"> </span><span class="nb">parseFloat</span><span class="p">(</span><span class="nx">precioStr</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">año</span><span class="o">:</span><span class="w"> </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">añoStr</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">0</span>
+<span class="w">            </span><span class="p">};</span>
+
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">putCommand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">PutCommand</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">Item</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilo</span>
+<span class="w">                </span><span class="p">});</span>
+
+<span class="w">                </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">putCommand</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ Insertado: </span><span class="si">${</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="si">}</span><span class="sb"> (ID: </span><span class="si">${</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">)`</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">insertados</span><span class="o">++</span><span class="p">;</span>
+
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`❌ Error insertando </span><span class="si">${</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">titulo</span><span class="si">}</span><span class="sb">:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">errores</span><span class="o">++</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 5. Resultado final</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">resultado</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">archivo</span><span class="o">:</span><span class="w"> </span><span class="nx">objectKey</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">totalLineas</span><span class="o">:</span><span class="w"> </span><span class="nx">dataLines</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">insertados</span><span class="o">:</span><span class="w"> </span><span class="nx">insertados</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">errores</span><span class="o">:</span><span class="w"> </span><span class="nx">errores</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Procesamiento completado:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">resultado</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">200</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">resultado</span><span class="p">)</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Error fatal:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">statusCode</span><span class="o">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+<span class="w">                </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Función auxiliar para convertir Stream a String</span>
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">streamToString</span><span class="p">(</span><span class="nx">stream</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">chunks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">        </span><span class="nx">stream</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">chunks</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">chunk</span><span class="p">));</span>
+<span class="w">        </span><span class="nx">stream</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">stream</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">resolve</span><span class="p">(</span><span class="nx">Buffer</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">chunks</span><span class="p">).</span><span class="nx">toString</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)));</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h3 id="paso-3-configurar-la-lambda"><strong>Paso 3: Configurar la Lambda</strong></h3>
+<h4 id="31-actualizar-el-timeout"><strong>3.1 Actualizar el Timeout</strong></h4>
+<p>Por defecto, Lambda tiene timeout de 3 segundos (muy poco para procesar archivos).</p>
+<ol>
+<li>Ve a la pestaña <strong>"Configuration"</strong></li>
+<li>Haz clic en <strong>"General configuration"</strong></li>
+<li>Haz clic en <strong>"Edit"</strong></li>
+<li><strong>Timeout</strong>: Cambia a <code>30</code> segundos</li>
+<li><strong>Memory</strong>: Deja 128 MB (suficiente)</li>
+<li>Haz clic en <strong>"Save"</strong></li>
+</ol>
+<h4 id="32-anadir-permisos-de-dynamodb"><strong>3.2 Añadir Permisos de DynamoDB</strong></h4>
+<p>La Lambda necesita permiso para escribir en DynamoDB.</p>
+<ol>
+<li>Ve a la pestaña <strong>"Configuration"</strong> → <strong>"Permissions"</strong></li>
+<li>Haz clic en el <strong>Role name</strong> (abre IAM en nueva pestaña)</li>
+<li>En IAM, haz clic en <strong>"Add permissions"</strong> → <strong>"Attach policies"</strong></li>
+<li>Busca y selecciona: <strong><code>AmazonDynamoDBFullAccess</code></strong><br />
+   - ⚠️ En producción usarías un policy más restrictivo (solo <code>PutItem</code> en tabla específica)</li>
+<li>Haz clic en <strong>"Add permissions"</strong></li>
+<li>Cierra la pestaña de IAM</li>
+</ol>
+<hr />
+<h2 id="parte-3-configurar-s3-event-notification">🛠️ Parte 3: Configurar S3 Event Notification</h2>
+<p>Ahora configuramos S3 para que <strong>dispare automáticamente</strong> la Lambda cuando se suba un archivo.</p>
+<h3 id="paso-1-anadir-permiso-a-lambda-resource-policy"><strong>Paso 1: Añadir Permiso a Lambda (Resource Policy)</strong></h3>
+<p>Primero, Lambda debe permitir que S3 la invoque.</p>
+<ol>
+<li>Ve a tu Lambda (<code>{prefijo}-procesar-vinilos-csv</code>)</li>
+<li>Pestaña <strong>"Configuration"</strong> → <strong>"Triggers"</strong></li>
+<li>Haz clic en <strong>"Add trigger"</strong></li>
+<li><strong>Select a source</strong>: <code>S3</code></li>
+<li><strong>Bucket</strong>: Selecciona tu bucket (<code>{prefijo}-vinilos-csv</code>)</li>
+<li><strong>Event type</strong>: <code>All object create events</code> (PUT, POST, COPY)</li>
+<li>⚠️ <strong>Acknowledge</strong>: Marca la casilla:<br />
+   - "I acknowledge that using the same S3 bucket for both input and output..."</li>
+<li>Haz clic en <strong>"Add"</strong></li>
+</ol>
+<p>✅ Ahora S3 puede invocar tu Lambda automáticamente.</p>
+<hr />
+<h3 id="paso-2-verificar-la-configuracion-en-s3"><strong>Paso 2: Verificar la Configuración en S3</strong></h3>
+<ol>
+<li>Ve a <strong>S3</strong> → Tu bucket (<code>{prefijo}-vinilos-csv</code>)</li>
+<li>Pestaña <strong>"Properties"</strong></li>
+<li>Desplázate hasta <strong>"Event notifications"</strong></li>
+<li>Deberías ver una notificación creada con:<br />
+   - <strong>Event types</strong>: <code>All object create events</code><br />
+   - <strong>Destination</strong>: Tu Lambda</li>
+</ol>
+<p>✅ La configuración está completa.</p>
+<hr />
+<h2 id="parte-4-probar-el-sistema">🧪 Parte 4: Probar el Sistema</h2>
+<h3 id="paso-1-preparar-el-archivo-csv"><strong>Paso 1: Preparar el Archivo CSV</strong></h3>
+<p>Crea un archivo llamado <code>vinilos-nuevos.csv</code> con este contenido:</p>
+<div class="highlight"><pre><span></span><code>id,titulo,artista,precio,año
+10,Back in Black,AC/DC,24.99,1980
+11,The Wall,Pink Floyd,27.50,1979
+12,Rumours,Fleetwood Mac,23.99,1977
+</code></pre></div>
+
+<p>⚠️ <strong>Importante</strong>:<br />
+- Primera línea: encabezados<br />
+- Líneas siguientes: datos<br />
+- Separador: coma (<code>,</code>)<br />
+- Sin espacios extra (excepto en títulos/artistas)</p>
+<hr />
+<h3 id="paso-2-subir-el-csv-a-s3"><strong>Paso 2: Subir el CSV a S3</strong></h3>
+<ol>
+<li>Ve a tu bucket S3 (<code>{prefijo}-vinilos-csv</code>)</li>
+<li>Haz clic en <strong>"Upload"</strong></li>
+<li>Haz clic en <strong>"Add files"</strong></li>
+<li>Selecciona <code>vinilos-nuevos.csv</code></li>
+<li>Haz clic en <strong>"Upload"</strong></li>
+<li>Espera a que aparezca <strong>"Upload succeeded"</strong></li>
+</ol>
+<p>🎉 <strong>En este momento, Lambda se ejecuta automáticamente</strong> (sin necesidad de invocarla manualmente).</p>
+<hr />
+<h3 id="paso-3-verificar-la-ejecucion-de-lambda"><strong>Paso 3: Verificar la Ejecución de Lambda</strong></h3>
+<ol>
+<li>Ve a <strong>Lambda</strong> → Tu función (<code>{prefijo}-procesar-vinilos-csv</code>)</li>
+<li>Pestaña <strong>"Monitor"</strong> → <strong>"Logs"</strong> → <strong>"View CloudWatch logs"</strong></li>
+<li>Haz clic en el <strong>log stream</strong> más reciente</li>
+<li>Deberías ver logs como:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">Lambda</span><span class="w"> </span><span class="n">invocada</span><span class="w"> </span><span class="n">por</span><span class="w"> </span><span class="n">S3</span><span class="w"> </span><span class="k">event</span>
+<span class="n">Procesando</span><span class="w"> </span><span class="nl">archivo:</span><span class="w"> </span><span class="n">vinilos</span><span class="o">-</span><span class="n">nuevos</span><span class="p">.</span><span class="n">csv</span><span class="w"> </span><span class="n">del</span><span class="w"> </span><span class="nl">bucket:</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">vinilos</span><span class="o">-</span><span class="n">csv</span>
+<span class="n">CSV</span><span class="w"> </span><span class="n">tiene</span><span class="w"> </span><span class="mh">3</span><span class="w"> </span><span class="n">registros</span><span class="w"> </span><span class="p">(</span><span class="n">sin</span><span class="w"> </span><span class="n">contar</span><span class="w"> </span><span class="n">encabezado</span><span class="p">)</span>
+<span class="err">✅</span><span class="w"> </span><span class="nl">Insertado:</span><span class="w"> </span><span class="n">Back</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">Black</span><span class="w"> </span><span class="p">(</span><span class="nl">ID:</span><span class="w"> </span><span class="mh">10</span><span class="p">)</span>
+<span class="err">✅</span><span class="w"> </span><span class="nl">Insertado:</span><span class="w"> </span><span class="n">The</span><span class="w"> </span><span class="n">Wall</span><span class="w"> </span><span class="p">(</span><span class="nl">ID:</span><span class="w"> </span><span class="mh">11</span><span class="p">)</span>
+<span class="err">✅</span><span class="w"> </span><span class="nl">Insertado:</span><span class="w"> </span><span class="n">Rumours</span><span class="w"> </span><span class="p">(</span><span class="nl">ID:</span><span class="w"> </span><span class="mh">12</span><span class="p">)</span>
+<span class="n">Procesamiento</span><span class="w"> </span><span class="nl">completado:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">archivo:</span><span class="w"> </span><span class="p">&#39;</span><span class="n">vinilos</span><span class="o">-</span><span class="n">nuevos</span><span class="p">.</span><span class="n">csv</span><span class="p">&#39;,</span><span class="w"> </span><span class="nl">totalLineas:</span><span class="w"> </span><span class="mh">3</span><span class="p">,</span><span class="w"> </span><span class="nl">insertados:</span><span class="w"> </span><span class="mh">3</span><span class="p">,</span><span class="w"> </span><span class="nl">errores:</span><span class="w"> </span><span class="mh">0</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+<p>✅ Si ves esto, <strong>funciona correctamente</strong>.</p>
+<hr />
+<h3 id="paso-4-verificar-los-datos-en-dynamodb"><strong>Paso 4: Verificar los Datos en DynamoDB</strong></h3>
+<ol>
+<li>Ve a <strong>DynamoDB</strong> → Tu tabla (<code>{prefijo}-vinilos</code>)</li>
+<li>Pestaña <strong>"Explore table items"</strong></li>
+<li>Deberías ver <strong>3 nuevos items</strong>:<br />
+   - ID 10: Back in Black<br />
+   - ID 11: The Wall<br />
+   - ID 12: Rumours</li>
+</ol>
+<p>✅ Los datos se insertaron automáticamente.</p>
+<hr />
+<h2 id="que-has-aprendido">🎓 ¿Qué has Aprendido?</h2>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Event-driven architecture</strong></td>
+<td>Arquitectura basada en eventos (no peticiones síncronas)</td>
+</tr>
+<tr>
+<td><strong>S3 Event Notifications</strong></td>
+<td>S3 dispara eventos cuando se crean/modifican objetos</td>
+</tr>
+<tr>
+<td><strong>Lambda Triggers</strong></td>
+<td>Lambda se ejecuta automáticamente en respuesta a eventos</td>
+</tr>
+<tr>
+<td><strong>Asynchronous processing</strong></td>
+<td>Procesamiento en segundo plano (no hay respuesta inmediata)</td>
+</tr>
+<tr>
+<td><strong>Resource Policy</strong></td>
+<td>Permisos para que un servicio (S3) invoque otro (Lambda)</td>
+</tr>
+<tr>
+<td><strong>CSV parsing</strong></td>
+<td>Leer y procesar archivos de texto estructurados</td>
+</tr>
+<tr>
+<td><strong>Stream processing</strong></td>
+<td>Leer archivos grandes como streams (no todo en memoria)</td>
+</tr>
+<tr>
+<td><strong>Error handling</strong></td>
+<td>Manejo de errores en pipelines de datos</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="diferencias-con-los-ejemplos-en-clase">🆚 Diferencias con los Ejemplos en Clase</h2>
+<table>
+<thead>
+<tr>
+<th>Aspecto</th>
+<th>Clase (API Gateway)</th>
+<th>Homework (S3 Trigger)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Trigger</strong></td>
+<td>Petición HTTP manual</td>
+<td>Upload de archivo automático</td>
+</tr>
+<tr>
+<td><strong>Respuesta</strong></td>
+<td>JSON inmediato al cliente</td>
+<td>No hay respuesta (async)</td>
+</tr>
+<tr>
+<td><strong>Operación DynamoDB</strong></td>
+<td><code>Scan</code> (leer)</td>
+<td><code>PutItem</code> (escribir)</td>
+</tr>
+<tr>
+<td><strong>Patrón</strong></td>
+<td>Request/Response</td>
+<td>Fire and Forget</td>
+</tr>
+<tr>
+<td><strong>Caso de uso</strong></td>
+<td>API REST pública</td>
+<td>ETL, carga masiva de datos</td>
+</tr>
+<tr>
+<td><strong>Timeout</strong></td>
+<td>30s (API Gateway límite)</td>
+<td>Hasta 15 min (Lambda límite)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ejercicios-adicionales-avanzado">🧪 Ejercicios Adicionales (Avanzado)</h2>
+<h3 id="1-validacion-mejorada"><strong>1. Validación Mejorada</strong></h3>
+<p>Añade validación de datos:<br />
+- Precio debe ser &gt; 0<br />
+- Año debe estar entre 1900 y año actual<br />
+- Titulo y artista no vacíos</p>
+<h3 id="2-manejo-de-duplicados"><strong>2. Manejo de Duplicados</strong></h3>
+<p>Modifica el código para:<br />
+- Detectar si un <code>id</code> ya existe en DynamoDB<br />
+- Solo insertar si es nuevo (o actualizar si existe)</p>
+<p><strong>Pista</strong>: Usa <code>GetCommand</code> antes de <code>PutCommand</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">existing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">docClient</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">GetCommand</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Key</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}));</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">existing</span><span class="p">.</span><span class="nx">Item</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`ID </span><span class="si">${</span><span class="nx">vinilo</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb"> ya existe, saltando...`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">continue</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="3-notificacion-de-resultados"><strong>3. Notificación de Resultados</strong></h3>
+<p>Añade SNS (Simple Notification Service):<br />
+- Envía email al administrador cuando termine el procesamiento<br />
+- Incluye resumen: total procesado, insertados, errores</p>
+<h3 id="4-carpetas-en-s3"><strong>4. Carpetas en S3</strong></h3>
+<p>Organiza archivos por fecha:<br />
+- <code>uploads/2025-01-15/vinilos.csv</code><br />
+- Lambda detecta solo archivos en carpeta <code>uploads/</code></p>
+<p><strong>Pista</strong>: Filtra por prefijo en Event Notification (S3).</p>
+<h3 id="5-procesamiento-de-archivos-grandes"><strong>5. Procesamiento de Archivos Grandes</strong></h3>
+<p>Si el CSV tiene miles de líneas:<br />
+- Procesar por lotes (<code>BatchWriteItem</code> en DynamoDB)<br />
+- Añadir pausa entre lotes para no saturar DynamoDB</p>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="lambda-no-se-ejecuta-al-subir-csv">Lambda no se ejecuta al subir CSV</h3>
+<p><strong>Causa 1</strong>: Event notification no configurado correctamente.</p>
+<p><strong>Solución</strong>:<br />
+- Ve a Lambda → Configuration → Triggers<br />
+- Verifica que aparece el bucket S3<br />
+- Ve a S3 → Bucket → Properties → Event notifications<br />
+- Verifica que el destino es tu Lambda</p>
+<p><strong>Causa 2</strong>: Lambda no tiene permiso (resource policy).</p>
+<p><strong>Solución</strong>:<br />
+- Borra el trigger en Lambda<br />
+- Vuelve a añadirlo (esto recrea el resource policy)</p>
+<hr />
+<h3 id="error-access-denied-en-logs">Error: "Access Denied" en logs</h3>
+<p><strong>Causa</strong>: Lambda no tiene permisos para leer S3.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a Lambda → Configuration → Permissions → Role name<br />
+2. En IAM, añade policy: <code>AmazonS3ReadOnlyAccess</code></p>
+<hr />
+<h3 id="error-table-does-not-exist">Error: "Table does not exist"</h3>
+<p><strong>Causa</strong>: Nombre de tabla incorrecto en el código.</p>
+<p><strong>Solución</strong>:<br />
+1. Ve a DynamoDB y verifica el nombre exacto de tu tabla<br />
+2. Actualiza <code>TABLE_NAME</code> en el código Lambda:<br />
+<code>javascript
+   const TABLE_NAME = "juan-perez-vinilos"; // EXACTO</code><br />
+3. Despliega el código de nuevo</p>
+<hr />
+<h3 id="error-validationexception-invalid-attribute-value-type">Error: "ValidationException: Invalid attribute value type"</h3>
+<p><strong>Causa</strong>: Tipo de dato incorrecto (ej: string en vez de number).</p>
+<p><strong>Solución</strong>:<br />
+- Usa <code>parseFloat()</code> para precios<br />
+- Usa <code>parseInt()</code> para años<br />
+- Verifica que CSV no tiene comillas extra</p>
+<hr />
+<h3 id="csv-se-procesa-pero-no-se-insertan-datos">CSV se procesa pero no se insertan datos</h3>
+<p><strong>Causa</strong>: Formato CSV incorrecto (líneas vacías, encoding).</p>
+<p><strong>Solución</strong>:<br />
+1. Abre el CSV en un editor de texto plano<br />
+2. Verifica:<br />
+   - Primera línea: <code>id,titulo,artista,precio,año</code><br />
+   - Sin espacios antes/después de comas<br />
+   - Sin líneas vacías entre registros<br />
+   - Encoding UTF-8 (sin BOM)</p>
+<hr />
+<h3 id="lambda-se-ejecuta-dos-veces">Lambda se ejecuta dos veces</h3>
+<p><strong>Causa</strong>: Event notification duplicado.</p>
+<p><strong>Solución</strong>:<br />
+- Ve a S3 → Bucket → Properties → Event notifications<br />
+- Borra notificaciones duplicadas<br />
+- Debe haber solo una</p>
+<hr />
+<h2 id="casos-de-uso-reales">📊 Casos de Uso Reales</h2>
+<p>Este patrón (S3 → Lambda → DynamoDB) se usa en:</p>
+<table>
+<thead>
+<tr>
+<th>Caso de Uso</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ETL (Extract, Transform, Load)</strong></td>
+<td>Cargar datos de sistemas externos</td>
+</tr>
+<tr>
+<td><strong>Data Lakes</strong></td>
+<td>Procesar archivos JSON/CSV en S3 → Analytics</td>
+</tr>
+<tr>
+<td><strong>Importación masiva</strong></td>
+<td>Migrar datos de sistemas legacy</td>
+</tr>
+<tr>
+<td><strong>Logs processing</strong></td>
+<td>Analizar logs de aplicaciones guardados en S3</td>
+</tr>
+<tr>
+<td><strong>Image processing</strong></td>
+<td>Redimensionar imágenes al subirlas (S3 → Lambda → S3)</td>
+</tr>
+<tr>
+<td><strong>Document indexing</strong></td>
+<td>Extraer texto de PDFs → Elasticsearch</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="costos">💰 Costos</h2>
+<p>Este ejercicio usa servicios en Free Tier:</p>
+<table>
+<thead>
+<tr>
+<th>Servicio</th>
+<th>Free Tier</th>
+<th>Coste</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lambda</td>
+<td>1M invocaciones/mes</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>5 GB + 20K GET/mes</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td>25 GB + 200M requests/mes</td>
+<td>$0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Coste estimado</strong>: $0.00 (dentro del Free Tier)</p>
+<hr />
+<h2 id="checklist-de-verificacion">✅ Checklist de Verificación</h2>
+<p>Antes de dar por completado el ejercicio:</p>
+<ul>
+<li>[ ] Bucket S3 creado: <code>{prefijo}-vinilos-csv</code></li>
+<li>[ ] Lambda creada: <code>{prefijo}-procesar-vinilos-csv</code></li>
+<li>[ ] Código Lambda actualizado con tu prefijo (<code>TABLE_NAME</code>)</li>
+<li>[ ] Timeout Lambda configurado (30s)</li>
+<li>[ ] Permisos IAM añadidos (S3 + DynamoDB)</li>
+<li>[ ] S3 Event Notification configurado</li>
+<li>[ ] CSV de prueba creado (<code>vinilos-nuevos.csv</code>)</li>
+<li>[ ] CSV subido a S3</li>
+<li>[ ] Lambda se ejecuta automáticamente (verificado en logs)</li>
+<li>[ ] Datos insertados en DynamoDB (verificado en tabla)</li>
+<li>[ ] Entendido el patrón event-driven vs API síncrona</li>
+</ul>
+<hr />
+<h2 id="enhorabuena">🎉 ¡Enhorabuena!</h2>
+<p>Has aprendido un segundo patrón de arquitectura serverless:</p>
+<p>✅ <strong>Patrón 1 (Clase)</strong>: Cliente → API Gateway → Lambda → DynamoDB (síncrono)<br />
+✅ <strong>Patrón 2 (Homework)</strong>: S3 Event → Lambda → DynamoDB (asíncrono)</p>
+<p><strong>Ambos patrones son fundamentales</strong> en arquitecturas serverless modernas.</p>
+<hr />
+<h2 id="proximos-pasos">🚀 Próximos Pasos</h2>
+<ol>
+<li>
+<p><strong>Limpia los recursos</strong> (cuando termines):<br />
+<code>bash
+   # Borra el CSV del bucket S3
+   # Borra el event notification (S3 → Properties)
+   # Borra la Lambda
+   # Borra el bucket S3
+   # (Deja DynamoDB si la usas en otros ejemplos)</code></p>
+</li>
+<li>
+<p><strong>Practica con otros formatos</strong>:<br />
+   - JSON en vez de CSV<br />
+   - XML<br />
+   - Parquet (archivos binarios)</p>
+</li>
+<li>
+<p><strong>Siguiente módulo</strong>: Migración a SAM (Infrastructure as Code)</p>
+</li>
+</ol>
+<hr />
+<h2 id="referencias">📚 Referencias</h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html">AWS Lambda S3 Tutorial</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/NotificationHowTo.html">S3 Event Notifications</a></li>
+<li><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html">DynamoDB PutItem</a></li>
+<li><a href="https://tools.ietf.org/html/rfc4180">CSV Format Specification</a></li>
+</ul>
+<hr />
+<p><strong>📝 Nota</strong>: Este ejercicio es <strong>opcional</strong> pero muy recomendado para entender arquitecturas event-driven, que son la base de muchas soluciones serverless modernas.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>

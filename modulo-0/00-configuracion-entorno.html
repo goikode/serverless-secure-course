@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 0: Configuración de Entorno - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">Módulo 0: Configuración de Entorno</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="modulo-0-configuracion-de-entorno">Módulo 0: Configuración de Entorno</h1>
+<h2 id="serverless-secure-code-preparacion-del-espacio-de-trabajo">Serverless Secure Code - Preparación del Espacio de Trabajo</h2>
+<h3 id="objetivos-de-aprendizaje">🎯 <strong>Objetivos de Aprendizaje</strong></h3>
+<p>Al finalizar este módulo, serás capaz de:<br />
+- ✅ Acceder a tu consola de AWS personal<br />
+- ✅ Configurar tu entorno Cloud9 de desarrollo<br />
+- ✅ Usar AWS CLI desde la línea de comandos<br />
+- ✅ Crear tu espacio de trabajo y clonar el repositorio del curso<br />
+- ✅ Verificar acceso a servicios AWS básicos</p>
+<h3 id="duracion-estimada-40-minutos-con-explicaciones-del-instructor">⏱️ <strong>Duración Estimada</strong>: 40 minutos (con explicaciones del instructor)</h3>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Tiempo</th>
+<th>Contenido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Introducción y contexto</td>
+<td>10 min</td>
+<td>Presentación del curso, arquitectura serverless</td>
+</tr>
+<tr>
+<td>Acceso a AWS Console</td>
+<td>3 min</td>
+<td>Login con credenciales proporcionadas</td>
+</tr>
+<tr>
+<td>Cloud9 Setup</td>
+<td>5 min</td>
+<td>Acceso al IDE, ejecución script de configuración</td>
+</tr>
+<tr>
+<td>AWS CLI Configuration</td>
+<td>7 min</td>
+<td>Configuración de credenciales</td>
+</tr>
+<tr>
+<td>Repositorio y Workspace</td>
+<td>10 min</td>
+<td>Creación workspace, git clone, checkout rama</td>
+</tr>
+<tr>
+<td>Verificación final</td>
+<td>5 min</td>
+<td>Script de verificación, resolución de dudas</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="paso-1-primer-acceso-a-aws">🔐 <strong>Paso 1: Primer Acceso a AWS</strong></h2>
+<h3 id="tu-informacion-de-acceso"><strong>Tu Información de Acceso</strong></h3>
+<blockquote>
+<p><strong>El instructor te entregará un archivo JSON con tu nombre</strong>: <code>tu-nombre.json</code></p>
+</blockquote>
+<p><strong>Descarga tu archivo desde la carpeta compartida</strong> que el instructor te indicará.</p>
+<p><strong>Contenido del archivo</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;estudiante&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;credenciales_consola&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://111109666774.signin.aws.amazon.com/console&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;usuario&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TempPassword123!&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;credenciales_cli&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;aws_access_key_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AKIAIOSFODNN7EXAMPLE&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;aws_secret_access_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;entorno_cloud9&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;url_directa&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://eu-west-1.console.aws.amazon.com/cloud9/ide/abc123&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;nombre&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez-ide&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;region&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<blockquote>
+<p>💡 <strong>Tip</strong>: Guarda este archivo JSON en un lugar seguro, lo necesitarás durante todo el curso.</p>
+</blockquote>
+<h3 id="acceso-inicial"><strong>Acceso Inicial</strong></h3>
+<ol>
+<li><strong>Abrir la consola de AWS</strong><br />
+   - Usa el enlace: https://console.aws.amazon.com/</li>
+<li><strong>Iniciar sesión</strong><br />
+<code>Account ID: [Proporcionado por el instructor]
+   Username: tu-usuario (ej: student01-a7b3f)
+   Password: tu-contraseña-temporal</code></li>
+<li><strong>🔐 Contraseña configurada</strong><br />
+   - Tu contraseña temporal ya está configurada para uso directo<br />
+   - No es necesario cambiarla al primer acceso (puedes si quieres)<br />
+   - <strong>Anota tu contraseña actual</strong> - la necesitarás durante el curso</li>
+</ol>
+<hr />
+<h2 id="paso-15-acceso-a-cloud9-y-configuracion-inicial">🖥️ <strong>Paso 1.5: Acceso a Cloud9 y Configuración Inicial</strong></h2>
+<h3 id="acceso-al-ide"><strong>Acceso al IDE</strong></h3>
+<ol>
+<li>
+<p><strong>Usa la URL directa de tu archivo JSON</strong>:<br />
+   - Copia la URL de <code>entorno_cloud9.url_directa</code><br />
+   - Pégala en tu navegador<br />
+   - Debería abrirse directamente el IDE de Cloud9</p>
+</li>
+<li>
+<p><strong>Si tienes problemas de "Not Authorized"</strong>:<br />
+   - Abre una pestaña en modo incógnito<br />
+   - Vuelve a pegar la URL del IDE de Cloud9<br />
+   - O bien: desde la consola AWS, vuelve a pegar manualmente la URL</p>
+</li>
+</ol>
+<h3 id="configuracion-inicial-del-entorno-recomendado"><strong>Configuración Inicial del Entorno (RECOMENDADO)</strong></h3>
+<p>Una vez dentro de Cloud9, ejecuta el script de configuración para actualizar Node.js y otras herramientas:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Descargar y ejecutar el script de setup</span>
+curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/goikode/serverless-secure-course/modulo-0/scripts/setup-cloud9-environment.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+</code></pre></div>
+
+<p><strong>¿Qué hace este script?</strong><br />
+- ✅ Actualiza Node.js de v18 a v20 LTS<br />
+- ✅ Actualiza npm a la última versión<br />
+- ✅ Instala AWS SAM CLI (si no está presente)<br />
+- ✅ Configura Git con valores por defecto<br />
+- ✅ Verifica todas las herramientas necesarias</p>
+<blockquote>
+<p>💡 <strong>Nota</strong>: Este paso es opcional pero muy recomendado para tener las últimas versiones.</p>
+</blockquote>
+<hr />
+<h2 id="i-nota-sobre-cloud9-y-rutas-por-defecto">ℹ️ Nota sobre Cloud9 y rutas por defecto</h2>
+<p>Cuando entras en Cloud9, el IDE te sitúa por defecto en:<br />
+- <code>/home/ec2-user/environment</code></p>
+<p>Este directorio es el "workspace por defecto" del entorno Cloud9. Para mantener el curso uniforme, trabajaremos en la subcarpeta recomendada:<br />
+- <code>~/environment/mi-workspace-ssc</code></p>
+<p>Si no estás en Cloud9 (por ejemplo trabajas localmente), la carpeta alternativa será:<br />
+- <code>~/mi-workspace-ssc</code></p>
+<hr />
+<h2 id="paso-16-crear-tu-espacio-de-trabajo-importante-antes-de-clonar">🗂️ <strong>Paso 1.6: Crear tu espacio de trabajo (IMPORTANTE — antes de clonar)</strong></h2>
+<ol>
+<li>En Cloud9 (o en tu terminal), crea el directorio recomendado:<br />
+   ```bash<br />
+   # En Cloud9 (recomendado)<br />
+   mkdir -p ~/environment/mi-workspace-ssc<br />
+   cd ~/environment/mi-workspace-ssc</li>
+</ol>
+<p># Si no usas Cloud9:<br />
+   # mkdir -p ~/mi-workspace-ssc<br />
+   # cd ~/mi-workspace-ssc<br />
+   ```<br />
+2. Este será el lugar donde clonaremos el repositorio y guardaremos el trabajo durante el curso.</p>
+<hr />
+<h2 id="paso-2-clonar-repositorio-del-curso-desde-tu-workspace">📁 <strong>Paso 2: Clonar Repositorio del Curso (desde tu workspace)</strong></h2>
+<p>Nota: cada módulo del curso está en una rama distinta del mismo repositorio. Para el Módulo 0 hay una rama llamada:<br />
+- <strong>modulo-0</strong></p>
+<ol>
+<li>Entra en tu espacio de trabajo y clona el repo:<br />
+   ```bash<br />
+   cd ~/environment/mi-workspace-ssc</li>
+</ol>
+<p># Si el repo es público:<br />
+   git clone https://github.com/goikode/serverless-secure-course.git</p>
+<p># Si el repo es privado (usa PAT o SSH)<br />
+   # HTTPS (te pedirá usuario + token):<br />
+   git clone https://github.com/goikode/serverless-secure-course.git</p>
+<p># Opción recomendada: SSH (si tienes clave SSH en GitHub)<br />
+   git clone git@github.com:goikode/serverless-secure-course.git<br />
+<code>2. Navega al repo:</code>bash<br />
+   cd serverless-secure-course<br />
+<code>3. Bájate todas las ramas remotas y comprueba que existe la rama del módulo:</code>bash<br />
+   git fetch --all --prune<br />
+   git branch -a<br />
+<code>``
+   Deberías ver algo como</code>remotes/origin/modulo-0` en la lista.</p>
+<ol start="4">
+<li>Cambia a la rama del módulo 0:<br />
+<code>bash
+   # Cambiar a la rama del Módulo 0
+   git checkout modulo-0</code></li>
+</ol>
+<hr />
+<h2 id="paso-3-verificacion-de-servicios-aws-y-herramientas">🧪 <strong>Paso 3: Verificación de Servicios AWS y herramientas</strong></h2>
+<ol>
+<li>
+<p>Asegúrate de estar en tu workspace:<br />
+<code>bash
+   cd ~/environment/mi-workspace-ssc/serverless-secure-course</code></p>
+</li>
+<li>
+<p>Comprueba herramientas básicas:<br />
+<code>bash
+   aws --version
+   git --version
+   curl --version</code></p>
+</li>
+<li>
+<p><strong>⚠️ IMPORTANTE: Configura AWS CLI</strong> (si no lo has hecho):<br />
+<code>bash
+   aws configure</code></p>
+</li>
+</ol>
+<p><strong>Todos los campos son OBLIGATORIOS:</strong><br />
+<code>AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE       # De tu archivo JSON
+   AWS Secret Access Key [None]: wJalrXUtnFEMI/K7M...   # De tu archivo JSON
+   Default region name [None]: eu-west-1                # ⚠️ OBLIGATORIO
+   Default output format [None]: json                   # Recomendado</code></p>
+<blockquote>
+<p>💡 <strong>Importante sobre la región</strong>:<br />
+- <strong>NO dejes la región vacía</strong> - debe ser <code>eu-west-1</code><br />
+- Si no configuras la región, AWS CLI no funcionará correctamente<br />
+- Todos los recursos del curso están en <code>eu-west-1</code> (Irlanda)</p>
+</blockquote>
+<ol start="4">
+<li>Verifica identidad:<br />
+<code>bash
+   aws sts get-caller-identity</code></li>
+</ol>
+<p>Deberías ver algo como:<br />
+<code>json
+   {
+     "UserId": "AIDAIOSFODNN7EXAMPLE",
+     "Account": "111109666774",
+     "Arn": "arn:aws:iam::111109666774:user/students/student02-wtvlt"
+   }</code></p>
+<ol start="5">
+<li>Probar servicios:<br />
+<code>bash
+   aws lambda list-functions
+   aws apigateway get-rest-apis
+   aws dynamodb list-tables</code></li>
+</ol>
+<hr />
+<h2 id="paso-4-lista-de-verificacion-final">✅ <strong>Paso 4: Lista de Verificación Final</strong></h2>
+<ul>
+<li>[ ] ✅ <strong>Acceso a consola AWS</strong></li>
+<li>[ ] ✅ <strong>Cloud9 funcionando</strong></li>
+<li>[ ] ✅ <strong>Workspace creado</strong> - <code>~/environment/mi-workspace-ssc</code></li>
+<li>[ ] ✅ <strong>AWS CLI configurado</strong></li>
+<li>[ ] ✅ <strong>Repositorio clonado en <code>~/environment/mi-workspace-ssc/serverless-secure-course</code></strong></li>
+<li>[ ] ✅ <strong>En la rama del Módulo 0</strong> - <code>modulo-0</code></li>
+<li>[ ] ✅ <strong>Servicios AWS verificados</strong></li>
+<li>[ ] ✅ <strong>Node.js actualizado</strong> (opcional pero recomendado)</li>
+</ul>
+<h3 id="comando-de-verificacion-completa"><strong>Comando de Verificación Completa</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Desde ~/environment/mi-workspace-ssc/serverless-secure-course</span>
+./scripts/test-modulo-0.sh
+</code></pre></div>
+
+<p>El script comprueba herramientas, configuración AWS, servicios, que el repo esté presente y si estás (o no) en la rama del módulo 0; si no lo estás te indicará cómo cambiarte.</p>
+<hr />
+<h2 id="troubleshooting-comun">🚨 <strong>Troubleshooting Común</strong></h2>
+<h3 id="problema-not-authorized-al-acceder-a-cloud9"><strong>Problema: "Not Authorized" al acceder a Cloud9</strong></h3>
+<p><strong>Solución</strong>:<br />
+1. Abre una pestaña en modo incógnito<br />
+2. Vuelve a pegar la URL directa del IDE desde tu archivo JSON<br />
+3. O bien: desde la consola AWS, navega manualmente a Cloud9</p>
+<h3 id="problema-no-puedo-clonar-el-repositorio-por-https"><strong>Problema: No puedo clonar el repositorio por HTTPS</strong></h3>
+<p><strong>Solución</strong>:<br />
+- El repo puede ser privado → usa Personal Access Token (PAT) o configura SSH<br />
+- Verifica que tienes acceso al repositorio en GitHub</p>
+<h3 id="problema-no-veo-la-rama-modulo-0"><strong>Problema: No veo la rama <code>modulo-0</code></strong></h3>
+<p><strong>Solución</strong>:</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>fetch<span class="w"> </span>--all<span class="w"> </span>--prune
+git<span class="w"> </span>checkout<span class="w"> </span>modulo-0
+</code></pre></div>
+
+<h3 id="problema-aws-cli-devuelve-errores"><strong>Problema: AWS CLI devuelve errores</strong></h3>
+<p><strong>Solución</strong>:<br />
+1. Verifica que ejecutaste <code>aws configure</code> correctamente<br />
+2. <strong>Asegúrate de haber configurado la región</strong>: <code>eu-west-1</code><br />
+3. Revisa que las Access Keys sean correctas<br />
+4. Comprueba: <code>aws configure list</code></p>
+<h3 id="problema-cloud9-no-carga-o-va-muy-lento"><strong>Problema: Cloud9 no carga o va muy lento</strong></h3>
+<p><strong>Solución</strong>:<br />
+- Refresca la página (F5)<br />
+- Cierra pestañas innecesarias en el IDE<br />
+- En casos extremos: reinicia el entorno desde la consola AWS</p>
+<h3 id="problema-nodejs-sigue-en-version-18"><strong>Problema: Node.js sigue en versión 18</strong></h3>
+<p><strong>Solución</strong>:<br />
+- Ejecuta el script de setup: <code>curl -fsSL https://raw.githubusercontent.com/goikode/serverless-secure-course/modulo-0/scripts/setup-cloud9-environment.sh | bash</code><br />
+- Cierra y vuelve a abrir el terminal<br />
+- Verifica: <code>node --version</code> (debería mostrar v20.x.x)</p>
+<hr />
+<p><em>Preparado por: Equipo Goikode | Serverless Secure Course | Versión 1.3</em></p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>
