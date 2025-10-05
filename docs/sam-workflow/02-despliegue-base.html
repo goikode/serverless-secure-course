@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 Despliegue Base - Goikode Serverless Secure Course</title>
+    <link rel="stylesheet" href="../styles/goikode-docs.css">
+</head>
+<body>
+    <!-- Header with logo and student prefix -->
+    <header class="doc-header">
+        <div class="doc-header-left">
+            <a href="../index.html" class="logo-link">
+                <img src="../assets/brand/logo.svg" alt="Goikode" class="doc-logo" onerror="this.src='../assets/brand/logo.png'">
+            </a>
+            <h1 class="doc-title">02 Despliegue Base</h1>
+        </div>
+        <div class="doc-header-right">
+            <div class="student-prefix-display">
+                <span class="student-prefix-label">Tu prefijo:</span>
+                <span id="header-student-prefix">-</span>
+            </div>
+            <button id="change-prefix-btn">Cambiar Prefijo</button>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Índice del Curso</h2>
+            <button class="sidebar-toggle" id="sidebar-toggle">✕</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="sidebar-loading">Cargando índice...</div>
+        </div>
+    </aside>
+
+    <!-- Toggle button for mobile -->
+    <button class="sidebar-open-btn" id="sidebar-open-btn">☰</button>
+
+    <!-- Main content container -->
+    <div class="doc-container with-sidebar">
+        <div class="doc-content">
+            <h1 id="despliegue-base-tu-primera-aplicacion-sam">Despliegue Base: Tu Primera Aplicación SAM</h1>
+<h2 id="de-la-consola-al-codigo-en-10-pasos">De la Consola al Código en 10 Pasos</h2>
+<hr />
+<h2 id="que-vas-a-hacer">🎯 Qué Vas a Hacer</h2>
+<p>Vas a desplegar una aplicación serverless completa usando <strong>Infrastructure as Code</strong> con AWS SAM. Todo lo que hiciste manualmente en consola (70 minutos), ahora lo harás con comandos en 3 minutos.</p>
+<p><strong>Arquitectura que desplegarás</strong>:</p>
+<div class="highlight"><pre><span></span><code>Cliente → API Gateway → Lambda → DynamoDB
+                           ↓
+                          S3 (imágenes)
+</code></pre></div>
+
+<hr />
+<h2 id="antes-de-empezar">📋 Antes de Empezar</h2>
+<h3 id="prerequisitos">Prerequisitos</h3>
+<p>Ejecuta estos comandos para verificar que tienes todo instalado:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>--version
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>: <code>SAM CLI, version 1.120.0</code> o superior</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>--version
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>: <code>aws-cli/2.x.x</code> o superior</p>
+<div class="highlight"><pre><span></span><code>node<span class="w"> </span>--version
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>: <code>v20.x.x</code> o superior</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>: Tu <code>UserId</code>, <code>Account</code> y <code>Arn</code> sin errores</p>
+<p>Si algo falla, consulta la documentación de setup del módulo 0.</p>
+<hr />
+<h2 id="paso-1-obtener-el-codigo">📥 Paso 1: Obtener el Código</h2>
+<h3 id="11-clonar-el-repositorio-si-no-lo-tienes-ya">1.1 Clonar el repositorio (si no lo tienes ya)</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/goikode/serverless-secure-course-workspace.git
+<span class="nb">cd</span><span class="w"> </span>serverless-secure-course-workspace
+</code></pre></div>
+
+<h3 id="12-hacer-checkout-de-la-rama-base">1.2 Hacer checkout de la rama base</h3>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>modulo-1-sam-base
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>Switched to branch &#39;modulo-1-sam-base&#39;
+Your branch is up to date with &#39;origin/modulo-1-sam-base&#39;.
+</code></pre></div>
+
+<h3 id="13-ir-al-directorio-del-proyecto-sam">1.3 Ir al directorio del proyecto SAM</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>applications/modulo-1-functional/sam-example
+<span class="nb">pwd</span>
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>/home/usuario/serverless-secure-course-workspace/applications/modulo-1-functional/sam-example
+</code></pre></div>
+
+<hr />
+<h2 id="paso-2-configurar-tu-prefijo">🔧 Paso 2: Configurar Tu Prefijo</h2>
+<h3 id="21-crear-archivo-de-configuracion">2.1 Crear archivo de configuración</h3>
+<p>Copia el archivo de ejemplo:</p>
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>samconfig.toml.example<span class="w"> </span>samconfig.toml
+</code></pre></div>
+
+<p><strong>Verificar</strong>:</p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w"> </span>samconfig.toml
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>: <code>-rw-r--r-- 1 usuario grupo 823 Jan 15 10:30 samconfig.toml</code></p>
+<h3 id="22-editar-configuracion-con-tu-prefijo">2.2 Editar configuración con tu prefijo</h3>
+<p>Abre el archivo:</p>
+<div class="highlight"><pre><span></span><code>nano<span class="w"> </span>samconfig.toml
+</code></pre></div>
+
+<p><strong>Busca estas 4 líneas</strong> (están en la sección <code>[default.deploy.parameters]</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="n">stack_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;REPLACE-WITH-YOUR-PREFIX-vinilos-stack&quot;</span>
+<span class="n">s3_bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;REPLACE-WITH-DEPLOYMENT-BUCKET&quot;</span>
+<span class="n">s3_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;REPLACE-WITH-YOUR-PREFIX-vinilos&quot;</span>
+<span class="n">parameter_overrides</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;StudentPrefix=REPLACE-WITH-YOUR-PREFIX&quot;</span>
+</code></pre></div>
+
+<p><strong>Reemplaza</strong> <code>REPLACE-WITH-YOUR-PREFIX</code> con tu prefijo personal (el que te asignaron).</p>
+<p><strong>Ejemplo</strong> con prefijo <code>juan-perez-a7b3f</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">stack_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos-stack&quot;</span>
+<span class="n">s3_bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-sam-deploy&quot;</span>
+<span class="n">s3_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos&quot;</span>
+<span class="n">parameter_overrides</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;StudentPrefix=juan-perez-a7b3f&quot;</span>
+</code></pre></div>
+
+<p><strong>⚠️ IMPORTANTE</strong>:<br />
+- No cambies nada más en el archivo<br />
+- Respeta el formato exacto (minúsculas, guiones)<br />
+- El prefijo debe coincidir en las 4 líneas</p>
+<p><strong>Guardar y salir de nano</strong>:<br />
+1. Presiona <code>Ctrl + O</code> (guardar)<br />
+2. Presiona <code>Enter</code> (confirmar nombre)<br />
+3. Presiona <code>Ctrl + X</code> (salir)</p>
+<h3 id="23-verificar-la-configuracion">2.3 Verificar la configuración</h3>
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span><span class="s2">&quot;StudentPrefix&quot;</span><span class="w"> </span>samconfig.toml
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong> algo como:</p>
+<div class="highlight"><pre><span></span><code>parameter_overrides = &quot;StudentPrefix=juan-perez-a7b3f&quot;
+</code></pre></div>
+
+<p>✅ Si ves tu prefijo correctamente, continúa. Si no, vuelve a editar el archivo.</p>
+<hr />
+<h2 id="paso-3-crear-bucket-de-despliegue">📦 Paso 3: Crear Bucket de Despliegue</h2>
+<p>SAM necesita un bucket S3 para almacenar los artefactos de despliegue.</p>
+<p><strong>Crea el bucket</strong> (reemplaza <code>{tu-prefijo}</code> con tu prefijo real):</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>mb<span class="w"> </span>s3://<span class="o">{</span>tu-prefijo<span class="o">}</span>-sam-deploy<span class="w"> </span>--region<span class="w"> </span>eu-west-1
+</code></pre></div>
+
+<p><strong>Ejemplo</strong>:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>mb<span class="w"> </span>s3://juan-perez-a7b3f-sam-deploy<span class="w"> </span>--region<span class="w"> </span>eu-west-1
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">make_bucket</span><span class="o">:</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">a7b3f</span><span class="o">-</span><span class="n">sam</span><span class="o">-</span><span class="n">deploy</span>
+</code></pre></div>
+
+<p><strong>Verificar que se creó</strong>:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>sam-deploy
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">35</span><span class="p">:</span><span class="mf">22</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">a7b3f</span><span class="o">-</span><span class="n">sam</span><span class="o">-</span><span class="n">deploy</span>
+</code></pre></div>
+
+<hr />
+<h2 id="paso-4-entender-el-template-sam">📚 Paso 4: Entender el Template SAM</h2>
+<p>Antes de desplegar, vamos a ver qué contiene <code>template.yaml</code>. Ábrelo:</p>
+<div class="highlight"><pre><span></span><code>less<span class="w"> </span>template.yaml
+</code></pre></div>
+
+<p>(Usa flechas para navegar, <code>q</code> para salir)</p>
+<h3 id="41-secciones-principales">4.1 Secciones Principales</h3>
+<h4 id="transform-linea-2"><strong>Transform</strong> (línea 2)</h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Transform</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::Serverless-2016-10-31</span>
+</code></pre></div>
+
+<p><strong>Qué hace</strong>: Le dice a CloudFormation que es un template SAM.</p>
+<h4 id="parameters-lineas-10-15"><strong>Parameters</strong> (líneas 10-15)</h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">StudentPrefix</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">String</span>
+<span class="w">    </span><span class="nt">Description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Student prefix (e.g., juan-perez-a7b3f)</span>
+</code></pre></div>
+
+<p><strong>Qué hace</strong>: Define el parámetro <code>StudentPrefix</code> que personalizará los nombres de recursos.</p>
+<h4 id="globals-lineas-17-34"><strong>Globals</strong> (líneas 17-34)</h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Globals</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Function</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">MemorySize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">    </span><span class="nt">Runtime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nodejs20.x</span>
+<span class="w">    </span><span class="nt">Environment</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Variables</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">TABLE_NAME</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosTable</span>
+<span class="w">        </span><span class="nt">BUCKET_NAME</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosImagenesBucket</span>
+</code></pre></div>
+
+<p><strong>Qué hace</strong>: Configuración compartida para todas las Lambdas.</p>
+<h4 id="resources-lineas-36-126"><strong>Resources</strong> (líneas 36-126)</h4>
+<p><strong>DynamoDB Table</strong> (líneas 40-57):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">VinilosTable</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::DynamoDB::Table</span>
+<span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">TableName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;${StudentPrefix}-vinilos&#39;</span>
+<span class="w">    </span><span class="nt">BillingMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PAY_PER_REQUEST</span>
+</code></pre></div>
+
+<p><strong>Qué crea</strong>: Tabla DynamoDB con tu prefijo (<code>juan-perez-a7b3f-vinilos</code>)</p>
+<p><strong>S3 Bucket</strong> (líneas 62-87):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">VinilosImagenesBucket</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::S3::Bucket</span>
+<span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">BucketName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;${StudentPrefix}-vinilos-imagenes&#39;</span>
+</code></pre></div>
+
+<p><strong>Qué crea</strong>: Bucket S3 con acceso público para imágenes.</p>
+<p><strong>Lambda Function</strong> (líneas 105-125):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">GetVinilosFunction</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::Serverless::Function</span>
+<span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">FunctionName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;${StudentPrefix}-get-vinilos&#39;</span>
+<span class="w">    </span><span class="nt">CodeUri</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">src/handlers/get-vinilos/</span>
+<span class="w">    </span><span class="nt">Handler</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index.handler</span>
+<span class="w">    </span><span class="nt">Policies</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">DynamoDBReadPolicy</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">TableName</span><span class="p">:</span><span class="w"> </span><span class="kt">!Ref</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VinilosTable</span>
+<span class="w">    </span><span class="nt">Events</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">GetVinilos</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HttpApi</span>
+<span class="w">        </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">Path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/vinilos</span>
+<span class="w">          </span><span class="nt">Method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get</span>
+</code></pre></div>
+
+<p><strong>Qué crea</strong>:<br />
+- Lambda function<br />
+- Permisos IAM automáticos (DynamoDBReadPolicy)<br />
+- Trigger de API Gateway (GET /vinilos)</p>
+<p><strong>API Gateway</strong> (líneas 130-147):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">VinilosHttpApi</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::Serverless::HttpApi</span>
+<span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">StageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$default</span>
+<span class="w">    </span><span class="nt">CorsConfiguration</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">AllowOrigins</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;*&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+
+<p><strong>Qué crea</strong>: HTTP API con CORS habilitado.</p>
+<h4 id="outputs-lineas-152-183"><strong>Outputs</strong> (líneas 152-183)</h4>
+<div class="highlight"><pre><span></span><code><span class="nt">Outputs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">VinilosApiUrl</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">API Gateway endpoint URL</span>
+<span class="w">    </span><span class="nt">Value</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sub</span><span class="w"> </span><span class="s">&#39;https://${VinilosHttpApi}.execute-api.${AWS::Region}.amazonaws.com/vinilos&#39;</span>
+</code></pre></div>
+
+<p><strong>Qué hace</strong>: Muestra la URL de la API después del deploy.</p>
+<h3 id="42-conceptos-clave">4.2 Conceptos Clave</h3>
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Qué Significa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>!Ref</code></td>
+<td>Referencia a otro recurso del template</td>
+</tr>
+<tr>
+<td><code>!Sub</code></td>
+<td>Substitución de variables (reemplaza <code>${...}</code>)</td>
+</tr>
+<tr>
+<td><code>!GetAtt</code></td>
+<td>Obtener atributo de un recurso (ej: <code>.Arn</code>)</td>
+</tr>
+<tr>
+<td><code>Type: AWS::Serverless::*</code></td>
+<td>Recurso simplificado de SAM</td>
+</tr>
+<tr>
+<td><code>Type: AWS::*</code></td>
+<td>Recurso nativo de CloudFormation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>💡 Ventaja de SAM</strong>: Compara cuántas líneas necesitas para crear Lambda + API Gateway + Permisos:</p>
+<ul>
+<li><strong>Consola AWS</strong>: ~50 clicks, 15 minutos</li>
+<li><strong>CloudFormation puro</strong>: ~150 líneas YAML</li>
+<li><strong>SAM</strong>: ~25 líneas YAML ✅</li>
+</ul>
+<hr />
+<h2 id="paso-5-instalar-dependencias-del-handler">🔨 Paso 5: Instalar Dependencias del Handler</h2>
+<p>El handler de Lambda usa AWS SDK para DynamoDB. Instala las dependencias:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>src/handlers/get-vinilos
+npm<span class="w"> </span>install
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">added</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="nx">packages</span><span class="p">,</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="nx">audited</span><span class="w"> </span><span class="mi">16</span><span class="w"> </span><span class="nx">packages</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">2</span><span class="nx">s</span>
+<span class="nx">found</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="nx">vulnerabilities</span>
+</code></pre></div>
+
+<p><strong>Volver al directorio raíz del proyecto</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../../..
+<span class="nb">pwd</span>
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>:</p>
+<div class="highlight"><pre><span></span><code>/home/usuario/.../sam-example
+</code></pre></div>
+
+<hr />
+<h2 id="paso-6-build-empaquetar-la-aplicacion">🏗️ Paso 6: Build - Empaquetar la Aplicación</h2>
+<p>El comando <code>sam build</code> empaqueta tu código:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>build
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Building codeuri: /path/to/src/handlers/get-vinilos runtime: nodejs20.x metadata: {}</span>
+<span class="x">Running NodejsNpmBuilder:NpmPack</span>
+<span class="x">Running NodejsNpmBuilder:CopyNpmrc</span>
+<span class="x">Running NodejsNpmBuilder:CopySource</span>
+<span class="x">Running NodejsNpmBuilder:NpmInstall</span>
+<span class="x">Running NodejsNpmBuilder:CleanUpNpmrc</span>
+
+<span class="x">Build Succeeded</span>
+
+<span class="x">Built Artifacts  : .aws-sam/build</span>
+<span class="x">Built Template   : .aws-sam/build/template.yaml</span>
+
+<span class="x">Commands you can use next</span>
+<span class="x">=========================</span>
+<span class="x">[*] Validate SAM template: sam validate</span>
+<span class="x">[*] Invoke Function: sam local invoke</span>
+<span class="x">[*] Test Function in the Cloud: sam sync --stack-name </span><span class="cp">{{</span><span class="nv">stack-name</span><span class="cp">}}</span><span class="x"> --watch</span>
+<span class="x">[*] Deploy: sam deploy --guided</span>
+</code></pre></div>
+
+<p>⏱️ <strong>Tiempo</strong>: 10-15 segundos</p>
+<p><strong>¿Qué hizo <code>sam build</code>?</strong><br />
+1. Leyó <code>template.yaml</code><br />
+2. Encontró la función <code>GetVinilosFunction</code><br />
+3. Copió código de <code>src/handlers/get-vinilos/</code><br />
+4. Ejecutó <code>npm install</code> en ese directorio<br />
+5. Empaquetó todo en <code>.aws-sam/build/</code></p>
+<p><strong>Verificar el build</strong>:</p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w"> </span>.aws-sam/build/GetVinilosFunction/
+</code></pre></div>
+
+<p><strong>Debe mostrar</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">drwxr</span><span class="o">-</span><span class="nx">xr</span><span class="o">-</span><span class="nx">x</span><span class="w">  </span><span class="nx">index</span><span class="p">.</span><span class="nx">js</span>
+<span class="nx">drwxr</span><span class="o">-</span><span class="nx">xr</span><span class="o">-</span><span class="nx">x</span><span class="w">  </span><span class="nx">node_modules</span><span class="o">/</span>
+<span class="nx">drwxr</span><span class="o">-</span><span class="nx">xr</span><span class="o">-</span><span class="nx">x</span><span class="w">  </span><span class="kn">package</span><span class="p">.</span><span class="nx">json</span>
+</code></pre></div>
+
+<p>✅ <strong>Checkpoint</strong>: Si ves <code>node_modules/</code> y <code>index.js</code>, el build fue exitoso.</p>
+<hr />
+<h2 id="paso-7-deploy-desplegar-a-aws">🚀 Paso 7: Deploy - Desplegar a AWS</h2>
+<p>Ahora desplegamos todo a AWS:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>deploy<span class="w"> </span>--guided
+</code></pre></div>
+
+<p>SAM te hará varias preguntas. <strong>Responde exactamente así</strong>:</p>
+<h3 id="pregunta-1">Pregunta 1</h3>
+<div class="highlight"><pre><span></span><code><span class="n">Stack</span><span class="w"> </span><span class="n">Name</span><span class="w"> </span><span class="o">[</span><span class="n">xxx</span><span class="o">]</span><span class="err">:</span>
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong> (usa el valor de samconfig.toml)</p>
+<h3 id="pregunta-2">Pregunta 2</h3>
+<div class="highlight"><pre><span></span><code>AWS Region [eu-west-1]:
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong></p>
+<h3 id="pregunta-3">Pregunta 3</h3>
+<div class="highlight"><pre><span></span><code><span class="k">Parameter</span><span class="w"> </span><span class="n">StudentPrefix</span><span class="w"> </span><span class="o">[</span><span class="n">xxx</span><span class="o">]</span><span class="err">:</span>
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong></p>
+<h3 id="pregunta-4">Pregunta 4</h3>
+<div class="highlight"><pre><span></span><code>#Shows you resources changes to be deployed and require a &#39;Y&#39; to initiate deploy
+Confirm changes before deploy [Y/n]:
+</code></pre></div>
+
+<p><strong>Escribe</strong>: <code>Y</code> y presiona Enter</p>
+<h3 id="pregunta-5">Pregunta 5</h3>
+<div class="highlight"><pre><span></span><code>#<span class="nv">SAM</span><span class="w"> </span><span class="nv">needs</span><span class="w"> </span><span class="nv">permission</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">be</span><span class="w"> </span><span class="nv">able</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">create</span><span class="w"> </span><span class="nv">roles</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="k">connect</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">the</span><span class="w"> </span><span class="nv">resources</span><span class="w"> </span><span class="nv">in</span><span class="w"> </span><span class="nv">your</span><span class="w"> </span><span class="nv">template</span>
+<span class="nv">Allow</span><span class="w"> </span><span class="nv">SAM</span><span class="w"> </span><span class="nv">CLI</span><span class="w"> </span><span class="nv">IAM</span><span class="w"> </span><span class="nv">role</span><span class="w"> </span><span class="nv">creation</span><span class="w"> </span>[<span class="nv">Y</span><span class="o">/</span><span class="nv">n</span>]:
+</code></pre></div>
+
+<p><strong>Escribe</strong>: <code>Y</code> y presiona Enter</p>
+<h3 id="pregunta-6">Pregunta 6</h3>
+<div class="highlight"><pre><span></span><code>#Preserves the state of previously provisioned resources when an operation fails
+Disable rollback [y/N]:
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong> (usa default N)</p>
+<h3 id="pregunta-7">Pregunta 7</h3>
+<div class="highlight"><pre><span></span><code>GetVinilosFunction may not have authorization defined, Is this okay? [y/N]:
+</code></pre></div>
+
+<p><strong>Escribe</strong>: <code>y</code> y presiona Enter<br />
+(Es correcto, la API es pública para este ejemplo)</p>
+<h3 id="pregunta-8">Pregunta 8</h3>
+<div class="highlight"><pre><span></span><code>Save arguments to samconfig.toml [Y/n]:
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong></p>
+<h3 id="pregunta-9">Pregunta 9</h3>
+<div class="highlight"><pre><span></span><code>SAM configuration file [samconfig.toml]:
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong></p>
+<h3 id="pregunta-10">Pregunta 10</h3>
+<div class="highlight"><pre><span></span><code><span class="n">SAM</span><span class="w"> </span><span class="n">configuration</span><span class="w"> </span><span class="n">environment</span><span class="w"> </span><span class="o">[</span><span class="n">default</span><span class="o">]</span><span class="err">:</span>
+</code></pre></div>
+
+<p><strong>Presiona Enter</strong></p>
+<hr />
+<h3 id="71-proceso-de-deploy">7.1 Proceso de Deploy</h3>
+<p>Verás este proceso (puede tardar 2-3 minutos):</p>
+<div class="highlight"><pre><span></span><code><span class="n">Uploading</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">a7b3f</span><span class="o">-</span><span class="n">vinilos</span><span class="o">/</span><span class="n">xxxxx</span><span class="o">.</span><span class="n">zip</span><span class="w">  </span><span class="mi">524288</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">524288</span><span class="w">  </span><span class="p">(</span><span class="mf">100.00</span><span class="o">%</span><span class="p">)</span>
+
+<span class="n">Waiting</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">changeset</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="n">created</span><span class="o">...</span>
+
+<span class="n">CloudFormation</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="n">changeset</span>
+<span class="o">---------------------------------------------------------------------</span>
+<span class="n">Operation</span><span class="w">            </span><span class="n">LogicalResourceId</span><span class="w">             </span><span class="n">ResourceType</span>
+<span class="o">---------------------------------------------------------------------</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">GetVinilosFunction</span><span class="w">            </span><span class="n">AWS</span><span class="p">::</span><span class="n">Lambda</span><span class="p">::</span><span class="n">Function</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">GetVinilosFunctionRole</span><span class="w">        </span><span class="n">AWS</span><span class="p">::</span><span class="n">IAM</span><span class="p">::</span><span class="n">Role</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">GetVinilosFunctionGetVinilos</span><span class="w">  </span><span class="n">AWS</span><span class="p">::</span><span class="n">Lambda</span><span class="p">::</span><span class="n">Permission</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">VinilosHttpApi</span><span class="w">                </span><span class="n">AWS</span><span class="p">::</span><span class="n">ApiGatewayV2</span><span class="p">::</span><span class="n">Api</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">VinilosHttpApiStage</span><span class="w">           </span><span class="n">AWS</span><span class="p">::</span><span class="n">ApiGatewayV2</span><span class="p">::</span><span class="n">Stage</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">VinilosImagenesBucket</span><span class="w">         </span><span class="n">AWS</span><span class="p">::</span><span class="n">S3</span><span class="p">::</span><span class="n">Bucket</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">VinilosImagenesBucketPolicy</span><span class="w">   </span><span class="n">AWS</span><span class="p">::</span><span class="n">S3</span><span class="p">::</span><span class="n">BucketPolicy</span>
+<span class="o">+</span><span class="w"> </span><span class="n">Add</span><span class="w">                </span><span class="n">VinilosTable</span><span class="w">                  </span><span class="n">AWS</span><span class="p">::</span><span class="n">DynamoDB</span><span class="p">::</span><span class="n">Table</span>
+<span class="o">---------------------------------------------------------------------</span>
+
+<span class="n">Deploy</span><span class="w"> </span><span class="n">this</span><span class="w"> </span><span class="n">changeset</span><span class="err">?</span><span class="w"> </span><span class="p">[</span><span class="n">y</span><span class="o">/</span><span class="n">N</span><span class="p">]:</span>
+</code></pre></div>
+
+<p><strong>Escribe</strong>: <code>y</code> y presiona Enter</p>
+<p><strong>Continuará</strong>:</p>
+<div class="highlight"><pre><span></span><code>CREATE_IN_PROGRESS                     AWS::CloudFormation::Stack              juan-perez-a7b3f-vinilos-stack
+CREATE_IN_PROGRESS                     AWS::DynamoDB::Table                    VinilosTable
+CREATE_IN_PROGRESS                     AWS::S3::Bucket                         VinilosImagenesBucket
+CREATE_IN_PROGRESS                     AWS::DynamoDB::Table                    VinilosTable
+CREATE_IN_PROGRESS                     AWS::S3::Bucket                         VinilosImagenesBucket
+CREATE_COMPLETE                        AWS::S3::Bucket                         VinilosImagenesBucket
+CREATE_IN_PROGRESS                     AWS::S3::BucketPolicy                   VinilosImagenesBucketPolicy
+CREATE_COMPLETE                        AWS::DynamoDB::Table                    VinilosTable
+CREATE_IN_PROGRESS                     AWS::IAM::Role                          GetVinilosFunctionRole
+CREATE_COMPLETE                        AWS::S3::BucketPolicy                   VinilosImagenesBucketPolicy
+CREATE_IN_PROGRESS                     AWS::IAM::Role                          GetVinilosFunctionRole
+CREATE_COMPLETE                        AWS::IAM::Role                          GetVinilosFunctionRole
+CREATE_IN_PROGRESS                     AWS::Lambda::Function                   GetVinilosFunction
+CREATE_IN_PROGRESS                     AWS::Lambda::Function                   GetVinilosFunction
+CREATE_COMPLETE                        AWS::Lambda::Function                   GetVinilosFunction
+CREATE_IN_PROGRESS                     AWS::ApiGatewayV2::Api                  VinilosHttpApi
+CREATE_IN_PROGRESS                     AWS::ApiGatewayV2::Api                  VinilosHttpApi
+CREATE_COMPLETE                        AWS::ApiGatewayV2::Api                  VinilosHttpApi
+CREATE_IN_PROGRESS                     AWS::Lambda::Permission                 GetVinilosFunctionGetVinilos
+CREATE_IN_PROGRESS                     AWS::ApiGatewayV2::Stage                VinilosHttpApiStage
+CREATE_COMPLETE                        AWS::Lambda::Permission                 GetVinilosFunctionGetVinilos
+CREATE_IN_PROGRESS                     AWS::ApiGatewayV2::Stage                VinilosHttpApiStage
+CREATE_COMPLETE                        AWS::ApiGatewayV2::Stage                VinilosHttpApiStage
+CREATE_COMPLETE                        AWS::CloudFormation::Stack              juan-perez-a7b3f-vinilos-stack
+</code></pre></div>
+
+<p>⏱️ <strong>Tiempo total</strong>: 2-3 minutos</p>
+<h3 id="72-outputs-del-deploy">7.2 Outputs del Deploy</h3>
+<p>Al final verás:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">CloudFormation</span><span class="w"> </span><span class="nv">outputs</span><span class="w"> </span><span class="nv">from</span><span class="w"> </span><span class="nv">deployed</span><span class="w"> </span><span class="nv">stack</span>
+<span class="o">------------------------------------------------------------------------</span>
+<span class="nv">Outputs</span>
+<span class="o">------------------------------------------------------------------------</span>
+<span class="nv">Key</span><span class="w">                 </span><span class="nv">VinilosApiUrl</span>
+<span class="nv">Description</span><span class="w">         </span><span class="nv">API</span><span class="w"> </span><span class="nv">Gateway</span><span class="w"> </span><span class="nv">endpoint</span><span class="w"> </span><span class="nv">URL</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nv">Vinyl</span><span class="w"> </span><span class="nv">catalog</span>
+<span class="nv">Value</span><span class="w">               </span><span class="nv">https</span>:<span class="o">//</span><span class="nv">abcd1234</span>.<span class="nv">execute</span><span class="o">-</span><span class="nv">api</span>.<span class="nv">eu</span><span class="o">-</span><span class="nv">west</span><span class="o">-</span><span class="mi">1</span>.<span class="nv">amazonaws</span>.<span class="nv">com</span><span class="o">/</span><span class="nv">vinilos</span>
+
+<span class="nv">Key</span><span class="w">                 </span><span class="nv">VinilosTableName</span>
+<span class="nv">Description</span><span class="w">         </span><span class="nv">DynamoDB</span><span class="w"> </span><span class="nv">table</span><span class="w"> </span><span class="nv">name</span>
+<span class="nv">Value</span><span class="w">               </span><span class="nv">juan</span><span class="o">-</span><span class="nv">perez</span><span class="o">-</span><span class="nv">a7b3f</span><span class="o">-</span><span class="nv">vinilos</span>
+
+<span class="nv">Key</span><span class="w">                 </span><span class="nv">VinilosImagesBucketName</span>
+<span class="nv">Description</span><span class="w">         </span><span class="nv">S3</span><span class="w"> </span><span class="nv">bucket</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nv">vinyl</span><span class="w"> </span><span class="nv">cover</span><span class="w"> </span><span class="nv">images</span>
+<span class="nv">Value</span><span class="w">               </span><span class="nv">juan</span><span class="o">-</span><span class="nv">perez</span><span class="o">-</span><span class="nv">a7b3f</span><span class="o">-</span><span class="nv">vinilos</span><span class="o">-</span><span class="nv">imagenes</span>
+
+<span class="nv">Key</span><span class="w">                 </span><span class="nv">VinilosImagesBucketUrl</span>
+<span class="nv">Description</span><span class="w">         </span><span class="nv">Base</span><span class="w"> </span><span class="nv">URL</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nv">S3</span><span class="w"> </span><span class="nv">images</span>
+<span class="nv">Value</span><span class="w">               </span><span class="nv">https</span>:<span class="o">//</span><span class="nv">juan</span><span class="o">-</span><span class="nv">perez</span><span class="o">-</span><span class="nv">a7b3f</span><span class="o">-</span><span class="nv">vinilos</span><span class="o">-</span><span class="nv">imagenes</span>.<span class="nv">s3</span>.<span class="nv">eu</span><span class="o">-</span><span class="nv">west</span><span class="o">-</span><span class="mi">1</span>.<span class="nv">amazonaws</span>.<span class="nv">com</span>
+
+<span class="nv">Key</span><span class="w">                 </span><span class="nv">GetVinilosFunctionArn</span>
+<span class="nv">Description</span><span class="w">         </span><span class="nv">Lambda</span><span class="w"> </span><span class="nv">Function</span><span class="w"> </span><span class="nv">ARN</span>
+<span class="nv">Value</span><span class="w">               </span><span class="nv">arn</span>:<span class="nv">aws</span>:<span class="nv">lambda</span>:<span class="nv">eu</span><span class="o">-</span><span class="nv">west</span><span class="o">-</span><span class="mi">1</span>:<span class="mi">123456789012</span>:<span class="nv">function</span>:<span class="nv">juan</span><span class="o">-</span><span class="nv">perez</span><span class="o">-</span><span class="nv">a7b3f</span><span class="o">-</span><span class="nv">get</span><span class="o">-</span><span class="nv">vinilos</span>
+<span class="o">------------------------------------------------------------------------</span>
+
+<span class="nv">Successfully</span><span class="w"> </span><span class="nv">created</span><span class="o">/</span><span class="nv">updated</span><span class="w"> </span><span class="nv">stack</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">juan</span><span class="o">-</span><span class="nv">perez</span><span class="o">-</span><span class="nv">a7b3f</span><span class="o">-</span><span class="nv">vinilos</span><span class="o">-</span><span class="nv">stack</span><span class="w"> </span><span class="nv">in</span><span class="w"> </span><span class="nv">eu</span><span class="o">-</span><span class="nv">west</span><span class="o">-</span><span class="mi">1</span>
+</code></pre></div>
+
+<p>📋 <strong>IMPORTANTE</strong>: Copia la URL de <code>VinilosApiUrl</code> (la necesitarás para probar).</p>
+<hr />
+<h2 id="paso-8-verificar-el-deploy-api-vacia">✅ Paso 8: Verificar el Deploy (API Vacía)</h2>
+<p>Prueba la API con curl (reemplaza la URL por la tuya de los Outputs):</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>https://abcd1234.execute-api.eu-west-1.amazonaws.com/vinilos
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Catálogo de vinilos desde DynamoDB (SAM deployment)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vinilos&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;bucket&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos-imagenes&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;region&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>✅ <strong>Si ves esto, ¡funciona!</strong> La API responde pero DynamoDB está vacía (vinilos: []).</p>
+<p>🎉 <strong>¡Felicidades!</strong> Has desplegado tu primera aplicación serverless con IaC.</p>
+<hr />
+<h2 id="paso-9-poblar-dynamodb-con-datos">📊 Paso 9: Poblar DynamoDB con Datos</h2>
+<p>Vamos a añadir 5 vinilos de ejemplo.</p>
+<h3 id="91-instalar-dependencias-del-script">9.1 Instalar dependencias del script</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>scripts
+npm<span class="w"> </span>install
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">added</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="nx">packages</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">2</span><span class="nx">s</span>
+</code></pre></div>
+
+<h3 id="92-obtener-nombre-de-la-tabla">9.2 Obtener nombre de la tabla</h3>
+<div class="highlight"><pre><span></span><code><span class="nv">TABLE_NAME</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>cloudformation<span class="w"> </span>describe-stacks<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s1">&#39;Stacks[0].Outputs[?OutputKey==`VinilosTableName`].OutputValue&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>text<span class="k">)</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$TABLE_NAME</span>
+</code></pre></div>
+
+<p><strong>Reemplaza</strong> <code>{tu-prefijo}</code> con tu prefijo real.</p>
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>juan-perez-a7b3f-vinilos
+</code></pre></div>
+
+<h3 id="93-ejecutar-script-de-seed">9.3 Ejecutar script de seed</h3>
+<div class="highlight"><pre><span></span><code>node<span class="w"> </span>seed-dynamodb.js<span class="w"> </span><span class="nv">$TABLE_NAME</span>
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>🌱 Iniciando seed de DynamoDB...
+📋 Tabla: juan-perez-a7b3f-vinilos
+
+✅ Insertado: Abbey Road - The Beatles
+✅ Insertado: Dark Side of the Moon - Pink Floyd
+✅ Insertado: Thriller - Michael Jackson
+✅ Insertado: Songs of Leonard Cohen - Leonard Cohen
+✅ Insertado: Naturally (Shades) - J.J. Cale
+
+📊 Resumen:
+  ✅ Insertados: 5
+  ❌ Errores: 0
+
+🎉 Seed completado exitosamente!
+</code></pre></div>
+
+<h3 id="94-volver-al-directorio-raiz">9.4 Volver al directorio raíz</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>..
+</code></pre></div>
+
+<hr />
+<h2 id="paso-10-subir-imagenes-a-s3">🖼️ Paso 10: Subir Imágenes a S3</h2>
+<h3 id="101-obtener-nombre-del-bucket">10.1 Obtener nombre del bucket</h3>
+<div class="highlight"><pre><span></span><code><span class="nv">BUCKET_NAME</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>cloudformation<span class="w"> </span>describe-stacks<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s1">&#39;Stacks[0].Outputs[?OutputKey==`VinilosImagesBucketName`].OutputValue&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>text<span class="k">)</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$BUCKET_NAME</span>
+</code></pre></div>
+
+<p><strong>Reemplaza</strong> <code>{tu-prefijo}</code> con tu prefijo real.</p>
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>juan-perez-a7b3f-vinilos-imagenes
+</code></pre></div>
+
+<h3 id="102-ejecutar-script-de-upload">10.2 Ejecutar script de upload</h3>
+<div class="highlight"><pre><span></span><code>./scripts/upload-images.sh<span class="w"> </span><span class="nv">$BUCKET_NAME</span>
+</code></pre></div>
+
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code>📦 Subiendo imágenes a S3...
+🪣 Bucket: juan-perez-a7b3f-vinilos-imagenes
+
+⚠️  Directorio &#39;sample-images&#39; no encontrado
+📁 Creando directorio con imágenes placeholder...
+✅ Creado placeholder: abbey-road.jpg
+✅ Creado placeholder: dark-side.jpg
+✅ Creado placeholder: thriller.jpg
+✅ Creado placeholder: leonard-cohen.jpg
+✅ Creado placeholder: jj-cale.jpg
+
+⬆️  Subiendo: abbey-road.jpg
+✅ Subido: abbey-road.jpg
+⬆️  Subiendo: dark-side.jpg
+✅ Subido: dark-side.jpg
+⬆️  Subiendo: thriller.jpg
+✅ Subido: thriller.jpg
+⬆️  Subiendo: leonard-cohen.jpg
+✅ Subido: leonard-cohen.jpg
+⬆️  Subiendo: jj-cale.jpg
+✅ Subido: jj-cale.jpg
+
+📊 Resumen:
+  ✅ Subidas: 5
+  ❌ Errores: 0
+
+🎉 Imágenes subidas exitosamente!
+
+🔗 URL base de imágenes:
+https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/
+</code></pre></div>
+
+<p><strong>Nota</strong>: Las imágenes son placeholders de texto. En un caso real, serían imágenes JPG reales.</p>
+<hr />
+<h2 id="paso-11-probar-la-api-completa">🎊 Paso 11: Probar la API Completa</h2>
+<p>Ahora sí, con datos reales:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>https://abcd1234.execute-api.eu-west-1.amazonaws.com/vinilos
+</code></pre></div>
+
+<p><strong>Reemplaza</strong> la URL por la tuya del Paso 7.2.</p>
+<p><strong>Output esperado</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mensaje&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Catálogo de vinilos desde DynamoDB (SAM deployment)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vinilos&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Abbey Road&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The Beatles&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">25.99</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1969</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abbey-road.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/abbey-road.jpg&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Dark Side of the Moon&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Pink Floyd&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">22.5</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1973</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dark-side.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/dark-side.jpg&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Thriller&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Michael Jackson&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">19.99</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1982</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;thriller.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/thriller.jpg&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Songs of Leonard Cohen&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Leonard Cohen&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">23.5</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1967</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;leonard-cohen.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/leonard-cohen.jpg&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;titulo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Naturally (Shades)&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;artista&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;J.J. Cale&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;precio&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">21.99</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;año&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1971</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;jj-cale.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;imagen&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://juan-perez-a7b3f-vinilos-imagenes.s3.eu-west-1.amazonaws.com/jj-cale.jpg&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;bucket&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;juan-perez-a7b3f-vinilos-imagenes&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;region&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eu-west-1&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>🎉 <strong>¡ÉXITO TOTAL!</strong> Tu API serverless está funcionando perfectamente.</p>
+<hr />
+<h2 id="paso-12-ver-logs-de-lambda">📝 Paso 12: Ver Logs de Lambda</h2>
+<p>Puedes ver los logs de Lambda en tiempo real:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>GetVinilosFunction<span class="w"> </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack<span class="w"> </span>--tail
+</code></pre></div>
+
+<p><strong>Reemplaza</strong> <code>{tu-prefijo}</code> con tu prefijo real.</p>
+<p><strong>Haz otra petición</strong> curl en otra terminal para ver los logs en vivo:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># En otra terminal</span>
+curl<span class="w"> </span>https://abcd1234.execute-api.eu-west-1.amazonaws.com/vinilos
+</code></pre></div>
+
+<p><strong>Output de logs</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">56.123000</span><span class="w"> </span><span class="n">START</span><span class="w"> </span><span class="n">RequestId</span><span class="p">:</span><span class="w"> </span><span class="n">abc123</span><span class="w"> </span><span class="n">Version</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">LATEST</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">56.456000</span><span class="w"> </span><span class="n">Lambda</span><span class="w"> </span><span class="n">invocada</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kr">GET</span><span class="w"> </span><span class="n">vinilos</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">56.789000</span><span class="w"> </span><span class="n">Event</span><span class="p">:</span><span class="w"> </span><span class="err">{</span>
+<span class="w">  </span><span class="s">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s">&quot;routeKey&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GET /vinilos&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="mf">...</span>
+<span class="err">}</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">57.012000</span><span class="w"> </span><span class="n">Scanning</span><span class="w"> </span><span class="n">DynamoDB</span><span class="w"> </span><span class="nb">tab</span><span class="n">le</span><span class="p">:</span><span class="w"> </span><span class="n">juan</span><span class="o">-</span><span class="n">perez</span><span class="o">-</span><span class="n">a7b3f</span><span class="o">-</span><span class="n">vinilos</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">57.345000</span><span class="w"> </span><span class="n">DynamoDB</span><span class="w"> </span><span class="n">Scan</span><span class="w"> </span><span class="n">result</span><span class="p">:</span><span class="w"> </span><span class="mf">5</span><span class="w"> </span><span class="n">items</span><span class="w"> </span><span class="n">found</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">57.678000</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="n">RequestId</span><span class="p">:</span><span class="w"> </span><span class="n">abc123</span>
+<span class="mf">2025</span><span class="o">-</span><span class="mf">01</span><span class="o">-</span><span class="mf">15</span><span class="n">T12</span><span class="p">:</span><span class="mf">34</span><span class="p">:</span><span class="mf">57.678000</span><span class="w"> </span><span class="n">REPORT</span><span class="w"> </span><span class="n">RequestId</span><span class="p">:</span><span class="w"> </span><span class="n">abc123</span>
+<span class="w">    </span><span class="n">Duration</span><span class="p">:</span><span class="w"> </span><span class="mf">523.45</span><span class="w"> </span><span class="n">ms</span>
+<span class="w">    </span><span class="n">Billed</span><span class="w"> </span><span class="n">Duration</span><span class="p">:</span><span class="w"> </span><span class="mf">524</span><span class="w"> </span><span class="n">ms</span>
+<span class="w">    </span><span class="n">Memory</span><span class="w"> </span><span class="n">Size</span><span class="p">:</span><span class="w"> </span><span class="mf">128</span><span class="w"> </span><span class="n">MB</span>
+<span class="w">    </span><span class="n">Max</span><span class="w"> </span><span class="n">Memory</span><span class="w"> </span><span class="n">Used</span><span class="p">:</span><span class="w"> </span><span class="mf">85</span><span class="w"> </span><span class="n">MB</span>
+</code></pre></div>
+
+<p><strong>Presiona Ctrl+C</strong> para salir de los logs.</p>
+<hr />
+<h2 id="comparacion-consola-vs-sam">🎯 Comparación: Consola vs SAM</h2>
+<table>
+<thead>
+<tr>
+<th>Aspecto</th>
+<th>Consola AWS</th>
+<th>SAM (IaC)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tiempo inicial</strong></td>
+<td>70 min</td>
+<td>3 min</td>
+</tr>
+<tr>
+<td><strong>Clicks/comandos</strong></td>
+<td>~50 clicks</td>
+<td>3 comandos</td>
+</tr>
+<tr>
+<td><strong>Reproducible</strong></td>
+<td>❌ No</td>
+<td>✅ Sí (template.yaml)</td>
+</tr>
+<tr>
+<td><strong>Versionable</strong></td>
+<td>❌ No</td>
+<td>✅ Sí (Git)</td>
+</tr>
+<tr>
+<td><strong>Rollback</strong></td>
+<td>❌ Manual</td>
+<td>✅ Automático</td>
+</tr>
+<tr>
+<td><strong>Documentación</strong></td>
+<td>❌ Capturas</td>
+<td>✅ Código = docs</td>
+</tr>
+<tr>
+<td><strong>Multi-entorno</strong></td>
+<td>❌ Repetir todo</td>
+<td>✅ Cambiar 1 parámetro</td>
+</tr>
+<tr>
+<td><strong>CI/CD</strong></td>
+<td>❌ No automatizable</td>
+<td>✅ Pipeline ready</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="checklist-final">✅ Checklist Final</h2>
+<p>Marca todo lo que completaste:</p>
+<ul>
+<li>[ ] SAM CLI, AWS CLI, Node.js verificados</li>
+<li>[ ] Repositorio clonado y rama checkout</li>
+<li>[ ] samconfig.toml configurado con tu prefijo</li>
+<li>[ ] Bucket de deployment creado</li>
+<li>[ ] Template SAM leído y entendido</li>
+<li>[ ] Dependencias instaladas (npm install)</li>
+<li>[ ] <code>sam build</code> ejecutado sin errores</li>
+<li>[ ] <code>sam deploy --guided</code> completado</li>
+<li>[ ] API devuelve 200 (aunque vacía)</li>
+<li>[ ] DynamoDB poblada con 5 vinilos</li>
+<li>[ ] Imágenes subidas a S3</li>
+<li>[ ] API devuelve 5 vinilos con URLs de imágenes</li>
+<li>[ ] Logs visibles con <code>sam logs --tail</code></li>
+</ul>
+<p>Si marcaste todo ✅, ¡estás listo para el siguiente ejercicio!</p>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="error-unable-to-upload-artifact-access-denied">Error: "Unable to upload artifact... Access Denied"</h3>
+<p><strong>Causa</strong>: El bucket de deployment no existe o no tienes permisos.</p>
+<p><strong>Solución</strong>:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>sam-deploy
+</code></pre></div>
+
+<p>Si no aparece, créalo de nuevo (Paso 3).</p>
+<hr />
+<h3 id="error-stack-name-already-exists">Error: "Stack {name} already exists"</h3>
+<p><strong>Causa</strong>: Ya desplegaste antes y el stack existe.</p>
+<p><strong>Solución</strong>: Usa <code>sam deploy</code> sin <code>--guided</code> (usa config guardada).</p>
+<hr />
+<h3 id="error-parameter-validation-failed-unknown-parameter">Error: "Parameter validation failed: Unknown parameter..."</h3>
+<p><strong>Causa</strong>: <code>StudentPrefix</code> en samconfig.toml tiene formato incorrecto.</p>
+<p><strong>Solución</strong>: Verifica formato: <code>nombre-apellido-xxxxx</code> (minúsculas, guiones).</p>
+<hr />
+<h3 id="api-devuelve-403-missing-authentication-token">API devuelve 403 "Missing Authentication Token"</h3>
+<p><strong>Causa</strong>: URL incorrecta o ruta mal escrita.</p>
+<p><strong>Solución</strong>: Verifica que la URL termine en <code>/vinilos</code>.</p>
+<hr />
+<h3 id="dynamodb-vacia-no-hay-datos">DynamoDB vacía (no hay datos)</h3>
+<p><strong>Causa</strong>: No ejecutaste el script de seed.</p>
+<p><strong>Solución</strong>: Ejecuta Paso 9 completo.</p>
+<hr />
+<h3 id="lambda-devuelve-error-500">Lambda devuelve error 500</h3>
+<p><strong>Causa</strong>: Error en código Lambda o permisos IAM.</p>
+<p><strong>Solución</strong>: Ver logs:</p>
+<div class="highlight"><pre><span></span><code>sam<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>GetVinilosFunction<span class="w"> </span>--stack-name<span class="w"> </span><span class="o">{</span>tu-prefijo<span class="o">}</span>-vinilos-stack
+</code></pre></div>
+
+<hr />
+<h2 id="proximo-paso">🚀 Próximo Paso</h2>
+<p>Ya tienes una aplicación SAM funcional desplegada. Ahora vas a:</p>
+<p><strong><a href="./03-ejercicio-post.html">Ejercicio Guiado: Añadir endpoint POST /vinilos</a></strong></p>
+<p>Aprenderás a:<br />
+- Añadir una nueva función Lambda al template<br />
+- Desplegar cambios en un stack existente<br />
+- Probar operaciones de escritura en DynamoDB</p>
+        </div>
+    </div>
+
+    <!-- JavaScript for student prefix management -->
+    <script src="../scripts/student-prefix.js"></script>
+    <!-- JavaScript for sidebar navigation -->
+    <script src="../scripts/sidebar-nav.js"></script>
+    <!-- JavaScript for copy code buttons -->
+    <script src="../scripts/copy-code.js"></script>
+</body>
+</html>
