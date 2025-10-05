@@ -6,15 +6,17 @@ Curso completo de desarrollo serverless seguro en AWS.
 
 ### 📖 Documentación HTML Interactiva
 
-**¡La documentación HTML está disponible desde el primer clone!**
+**¡La documentación está disponible en la rama `docs`!**
 
-Abre directamente en tu navegador:
 ```bash
-# Clona el repositorio
+# 1. Clona el repositorio
 git clone https://github.com/goikode/serverless-secure-course.git
 cd serverless-secure-course
 
-# Abre la documentación HTML
+# 2. Cambia a la rama de documentación
+git checkout docs
+
+# 3. Abre la documentación HTML
 open docs/index.html  # macOS
 xdg-open docs/index.html  # Linux
 start docs/index.html  # Windows
@@ -22,6 +24,7 @@ start docs/index.html  # Windows
 
 O con un servidor local:
 ```bash
+git checkout docs
 cd docs
 python3 -m http.server 8000
 # Visita: http://localhost:8000
@@ -36,6 +39,9 @@ python3 -m http.server 8000
 - **Comandos Personalizados**: Todos los comandos AWS usan TU prefijo
 
 ## 📚 Estructura del Curso
+
+### Módulo 0: Configuración de Entorno
+Configuración inicial de AWS Cloud9 y verificación de acceso
 
 ### Módulo 1.A: Desarrollo con Consola AWS (2.5h)
 Construye una aplicación serverless funcional desde la consola:
@@ -53,14 +59,14 @@ Aprende a automatizar despliegues serverless:
 - Despliegues automatizados vs manual
 - **Ramas**: `modulo-1-base` (inicial), `modulo-1-completo` (solución)
 
-### Módulo 2: Pentesting (3h)
+### Módulo 2: Pentesting (3h) - Próximamente
 Aprende a identificar vulnerabilidades comunes:
 - NoSQL Injection
 - Autenticación débil
 - Exposición de datos sensibles
 - Control de acceso roto
 
-### Módulo 3: Securización (3h)
+### Módulo 3: Securización (3h) - Próximamente
 Implementa las mejores prácticas de seguridad:
 - Validación y sanitización de inputs
 - Gestión segura de secretos
@@ -69,28 +75,41 @@ Implementa las mejores prácticas de seguridad:
 
 ## 📂 Estructura del Repositorio
 
+### Rama `main`:
 ```
 serverless-secure-course/
-├── docs/
-│   ├── index.html              # Índice principal de documentación
-│   ├── modulo-1a-consola/      # Módulo 1.A: Desarrollo con Consola AWS
-│   │   ├── 00-vision-general.html
-│   │   ├── 01-lambda-hardcoded.html
-│   │   ├── 02-dynamodb-table.html
-│   │   ├── 03-s3-imagenes.html
-│   │   ├── 04-api-gateway.html
-│   │   └── ejercicio-opcional-s3-trigger.html
-│   ├── modulo-1b-sam/          # Módulo 1.B: SAM (IaC)
-│   │   ├── 00-plan-pedagogico.html
-│   │   ├── 01-introduccion-sam.html
-│   │   ├── 02-workflow-sam.html
-│   │   └── 03-post-vinilos.html
-│   ├── styles/                 # CSS con branding Goikode
-│   ├── scripts/                # JavaScript para prefijos dinámicos
-│   └── assets/                 # Logo y recursos
-├── src/                        # Código fuente (en ramas específicas)
-└── README.md
+├── README.md                   # Este archivo
+├── .gitignore
+└── (código de estudiantes en ramas específicas)
 ```
+
+### Rama `docs`:
+```
+docs/
+├── index.html                  # Índice principal
+├── modulo-0/                   # Configuración entorno
+│   └── 00-configuracion-entorno.html
+├── modulo-1a-consola/          # Módulo 1.A (7 guías)
+│   ├── 00-vision-general.html
+│   ├── 01-lambda-hardcoded.html
+│   ├── 02-dynamodb-table.html
+│   ├── 03-s3-imagenes.html
+│   ├── 04-api-gateway.html
+│   └── ejercicio-opcional-s3-trigger.html
+├── modulo-1b-sam/              # Módulo 1.B (4 guías)
+│   ├── 01-introduccion-sam.html
+│   ├── 02-ejercicio-despliegue-base.html
+│   ├── 03-ejercicio-post.html
+│   └── 04-ejercicio-get-by-id.html
+├── styles/                     # CSS con branding Goikode
+├── scripts/                    # JavaScript para prefijos
+└── assets/                     # Logo y recursos
+```
+
+### Ramas de código:
+- `modulo-0`: Configuración inicial
+- `modulo-1-base`: Código inicial Módulo 1
+- `modulo-1-completo`: Solución completa Módulo 1
 
 ## 🎯 Tu Prefijo Único
 
@@ -108,11 +127,11 @@ Este prefijo se usa en TODOS los recursos AWS que crees:
 
 **Importante**: Siempre inicia el nombre del recurso con tu prefijo.
 
-## 🌐 Documentación Online
+## 🌐 Acceso a la Documentación
 
-También puedes acceder a la documentación desde:
-- **GitHub Pages**: (cuando se active)
-- **Archivo Local**: Siempre disponible después de clonar
+La documentación está disponible en la rama `docs`:
+- **Local**: Clona el repo y haz `git checkout docs`
+- **Offline**: Funciona sin conexión después de clonar
 
 ## 🛠️ Requisitos Previos
 
