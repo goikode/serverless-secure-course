@@ -1,0 +1,20 @@
+{
+  "name": "get-vinilos-handler",
+  "version": "1.0.0",
+  "description": "Lambda handler for getting vinyl catalog from DynamoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lambda",
+    "dynamodb",
+    "serverless"
+  ],
+  "author": "Goikode - Serverless Secure Course",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0"
+  }
+}

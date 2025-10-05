@@ -1,0 +1,25 @@
+# SAM build artifacts
+.aws-sam/
+
+# SAM configuration (contains student-specific data)
+samconfig.toml
+
+# Node.js dependencies
+node_modules/
+package-lock.json
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sample images (if real images are used, they should be committed)
+sample-images/

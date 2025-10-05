@@ -1,0 +1,31 @@
+# SAM CLI configuration file - EXAMPLE
+#
+# 1. Copia este archivo a samconfig.toml:
+#    cp samconfig.toml.example samconfig.toml
+#
+# 2. Reemplaza los valores REPLACE-WITH-* con tus datos:
+#    - REPLACE-WITH-YOUR-PREFIX: tu prefijo de estudiante (ej: juan-perez-a7b3f)
+#    - REPLACE-WITH-DEPLOYMENT-BUCKET: bucket para artefactos SAM (ej: juan-perez-a7b3f-sam-deploy)
+#
+# 3. Guarda el archivo
+#
+# IMPORTANTE: samconfig.toml NO debe versionarse en git (está en .gitignore)
+
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "REPLACE-WITH-YOUR-PREFIX-vinilos-stack"
+s3_bucket = "REPLACE-WITH-DEPLOYMENT-BUCKET"
+s3_prefix = "REPLACE-WITH-YOUR-PREFIX-vinilos"
+region = "eu-west-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "StudentPrefix=REPLACE-WITH-YOUR-PREFIX"
+confirm_changeset = true
+image_repositories = []
+
+[default.build]
+[default.build.parameters]
+cached = true
+parallel = true

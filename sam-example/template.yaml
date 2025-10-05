@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Serverless Secure Course - Module 1
+
+  Vinyl catalog API with Lambda, DynamoDB, S3, and API Gateway
+  Complete migration from console examples to Infrastructure as Code
+
+# Parameters allow customization per student deployment
+Parameters:
+  StudentPrefix:
+    Type: String
+    Description: Student prefix (e.g., juan-perez-a7b3f)
+    AllowedPattern: ^[a-z]+-[a-z]+-[a-z0-9]{5}$
+    ConstraintDescription: Must match format nombre-apellido-xxxxx
+
+# Global configuration for all Lambda functions
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        # Environment variable available to all Lambdas
+        TABLE_NAME: !Ref VinilosTable
+        BUCKET_NAME: !Ref VinilosImagenesBucket
+        REGION: !Ref AWS::Region
+    Tags:
+      Student: !Ref StudentPrefix
+      Course: serverless-secure-course
+      Module: module-1-functional
+
+Resources:
+  ##########################################################################
+  # DynamoDB Table - Vinyl Catalog Storage
+  ##########################################################################
+  VinilosTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${StudentPrefix}-vinilos'
+      BillingMode: PAY_PER_REQUEST  # On-demand pricing (better for educational use)
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      Tags:
+        - Key: Student
+          Value: !Ref StudentPrefix
+        - Key: Course
+          Value: serverless-secure-course
+        - Key: Module
+          Value: module-1-functional
+
+  ##########################################################################
+  # S3 Bucket - Vinyl Cover Images (Public Read)
+  ##########################################################################
+  VinilosImagenesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${StudentPrefix}-vinilos-imagenes'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+            AllowedHeaders:
+              - '*'
+            MaxAge: 3600
+      Tags:
+        - Key: Student
+          Value: !Ref StudentPrefix
+        - Key: Course
+          Value: serverless-secure-course
+        - Key: Module
+          Value: module-1-functional
+
+  # Bucket Policy - Allow public read access to images
+  VinilosImagenesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref VinilosImagenesBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub '${VinilosImagenesBucket.Arn}/*'
+
+  ##########################################################################
+  # Lambda Function - Get Vinilos
+  ##########################################################################
+  GetVinilosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${StudentPrefix}-get-vinilos'
+      CodeUri: src/handlers/get-vinilos/
+      Handler: index.handler
+      Description: Returns vinyl catalog from DynamoDB with S3 image URLs
+      Policies:
+        # SAM Policy Templates - simplified IAM permissions
+        - DynamoDBReadPolicy:
+            TableName: !Ref VinilosTable
+        - S3ReadPolicy:
+            BucketName: !Ref VinilosImagenesBucket
+      Events:
+        # API Gateway integration
+        GetVinilos:
+          Type: HttpApi
+          Properties:
+            Path: /vinilos
+            Method: get
+            ApiId: !Ref VinilosHttpApi
+
+  ##########################################################################
+  # API Gateway HTTP API
+  ##########################################################################
+  VinilosHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      Description: !Sub 'Vinyl catalog API for ${StudentPrefix}'
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+        MaxAge: 600
+      Tags:
+        Student: !Ref StudentPrefix
+        Course: serverless-secure-course
+        Module: module-1-functional
+
+##########################################################################
+# Outputs - Important values to display after deployment
+##########################################################################
+Outputs:
+  VinilosApiUrl:
+    Description: API Gateway endpoint URL for Vinyl catalog
+    Value: !Sub 'https://${VinilosHttpApi}.execute-api.${AWS::Region}.amazonaws.com/vinilos'
+    Export:
+      Name: !Sub '${StudentPrefix}-VinilosApiUrl'
+
+  GetVinilosFunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt GetVinilosFunction.Arn
+    Export:
+      Name: !Sub '${StudentPrefix}-GetVinilosFunctionArn'
+
+  VinilosTableName:
+    Description: DynamoDB table name
+    Value: !Ref VinilosTable
+    Export:
+      Name: !Sub '${StudentPrefix}-VinilosTableName'
+
+  VinilosImagesBucketName:
+    Description: S3 bucket for vinyl cover images
+    Value: !Ref VinilosImagenesBucket
+    Export:
+      Name: !Sub '${StudentPrefix}-VinilosImagesBucketName'
+
+  VinilosImagesBucketUrl:
+    Description: Base URL for S3 images
+    Value: !Sub 'https://${VinilosImagenesBucket}.s3.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${StudentPrefix}-VinilosImagesBucketUrl'
