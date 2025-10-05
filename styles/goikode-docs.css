@@ -220,17 +220,6 @@
     transform: translateY(0);
 }
 
-/* ========== STUDENT PREFIX HIGHLIGHTING ========== */
-.student-prefix {
-    background-color: #fff176;
-    color: var(--text-dark);
-    padding: 0.1rem 0.3rem;
-    border-radius: 2px;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 500;
-    border: 1px solid #ffd54f;
-}
-
 /* ========== SIDEBAR NAVIGATION ========== */
 .sidebar {
     position: fixed;

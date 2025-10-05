@@ -71,7 +71,7 @@ class StudentPrefixManager {
         const contentElements = document.querySelectorAll('p, li, pre, code, td, th, h1, h2, h3, h4, h5, h6');
 
         contentElements.forEach(el => {
-            if (el.querySelector('.student-prefix')) {
+            if (el.getAttribute('data-prefix-applied') === 'true') {
                 // Already processed
                 return;
             }
@@ -82,12 +82,15 @@ class StudentPrefixManager {
                 el.innerHTML = el.innerHTML
                     .replace(
                         /\{prefijo\}/g,
-                        `<span class="student-prefix">${this.prefix}</span>`
+                        `<strong>${this.prefix}</strong>`
                     )
                     .replace(
                         /\{tu-prefijo\}/g,
-                        `<span class="student-prefix">${this.prefix}</span>`
+                        `<strong>${this.prefix}</strong>`
                     );
+
+                // Mark as processed
+                el.setAttribute('data-prefix-applied', 'true');
             }
         });
     }
