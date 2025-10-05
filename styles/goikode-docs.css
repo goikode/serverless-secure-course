@@ -460,10 +460,53 @@ p {
 }
 
 /* ========== CODE BLOCKS ========== */
+.code-block-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+}
+
+.code-block-wrapper .copy-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    z-index: 10;
+}
+
+.code-block-wrapper .copy-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.code-block-wrapper .copy-button.copied {
+    background: #4caf50;
+    border-color: #4caf50;
+}
+
+.code-block-wrapper .copy-button::before {
+    content: "📋";
+    font-size: 1rem;
+}
+
+.code-block-wrapper .copy-button.copied::before {
+    content: "✓";
+}
+
 pre {
     font-family: 'JetBrains Mono', monospace;
     padding: 1.5rem;
-    margin: 1.5rem 0;
+    margin: 0;
     font-size: 0.9rem;
     line-height: 1.6;
     border-radius: 6px;
@@ -487,7 +530,18 @@ pre:not(.bash):not(.sql):not(.javascript):not(.python) {
     border-color: #e2e8f0;
 }
 
-/* Inline code */
+.code-block-wrapper pre.bash .copy-button,
+.code-block-wrapper pre:not(.bash):not(.sql):not(.javascript):not(.python) .copy-button {
+    background: rgba(0, 188, 212, 0.2);
+    border-color: rgba(0, 188, 212, 0.4);
+    color: var(--primary-cyan);
+}
+
+.code-block-wrapper pre:not(.bash) .copy-button:hover {
+    background: rgba(0, 188, 212, 0.3);
+}
+
+/* Inline code with copy button */
 code:not(pre code) {
     font-family: 'JetBrains Mono', monospace;
     background-color: #f8f9fa;
@@ -497,6 +551,41 @@ code:not(pre code) {
     font-weight: 400;
     border-radius: 3px;
     border: 1px solid #e9ecef;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+code:not(pre code).with-copy {
+    padding-right: 1.8rem;
+}
+
+.inline-copy-button {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.2rem;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.inline-copy-button:hover {
+    color: var(--primary-cyan);
+    transform: scale(1.1);
+}
+
+.inline-copy-button.copied {
+    color: #4caf50;
+}
+
+.inline-copy-button::before {
+    content: "📋";
 }
 
 /* ========== LISTS ========== */
