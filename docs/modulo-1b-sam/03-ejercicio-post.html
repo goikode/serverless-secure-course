@@ -56,6 +56,83 @@
 - ✅ GET /vinilos (ya existe)<br />
 - ✅ <strong>POST /vinilos (nuevo)</strong> ← Esto es lo que vas a crear</p>
 <hr />
+<h2 id="comparacion-get-vs-post">📊 Comparación: GET vs POST</h2>
+<p>Antes de empezar, entiende las diferencias clave:</p>
+<table>
+<thead>
+<tr>
+<th>Aspecto</th>
+<th>GET /vinilos</th>
+<th>POST /vinilos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Propósito</strong></td>
+<td>Leer datos</td>
+<td>Crear datos</td>
+</tr>
+<tr>
+<td><strong>Operación DynamoDB</strong></td>
+<td>Scan</td>
+<td>PutItem</td>
+</tr>
+<tr>
+<td><strong>Permisos IAM</strong></td>
+<td><code>DynamoDBReadPolicy</code></td>
+<td><code>DynamoDBWritePolicy</code></td>
+</tr>
+<tr>
+<td><strong>Request body</strong></td>
+<td>No</td>
+<td>Sí (JSON con datos)</td>
+</tr>
+<tr>
+<td><strong>Response code</strong></td>
+<td>200 OK</td>
+<td>201 Created</td>
+</tr>
+<tr>
+<td><strong>Idempotencia</strong></td>
+<td>✅ Sí</td>
+<td>❌ No (cada POST crea nuevo item)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="arquitectura-del-endpoint-post">🏗️ Arquitectura del Endpoint POST</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────┐
+│   Cliente   │
+│  (Postman)  │
+└──────┬──────┘
+       │ POST /vinilos
+       │ Body: { titulo, artista, precio, ... }
+       ↓
+┌─────────────────────────┐
+│     API Gateway         │
+│  POST /vinilos          │
+└────────┬────────────────┘
+         │ invoke
+         ↓
+┌────────────────────────┐
+│  Lambda                │
+│  create-vinilo         │
+│  1. Parse JSON         │
+│  2. Validate data      │
+│  3. Generate ID        │
+│  4. Insert to DynamoDB │
+└────────┬───────────────┘
+         │ PutItem
+         ↓
+  ┌──────────────────┐
+  │   DynamoDB       │
+  │ {prefijo}-vinilos│
+  │                  │
+  │ + nuevo vinilo   │
+  └──────────────────┘
+</code></pre></div>
+
+<hr />
 <h2 id="antes-de-empezar">📋 Antes de Empezar</h2>
 <h3 id="prerequisitos">Prerequisitos</h3>
 <ul>
