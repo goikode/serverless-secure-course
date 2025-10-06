@@ -8,7 +8,7 @@
 class StudentPrefixManager {
     constructor() {
         this.STORAGE_KEY = 'ssc_student_prefix';
-        this.PREFIX_PATTERN = /^[a-z]+-[a-z]+\d{2}-[a-z0-9]{5}$/; // nombre-apellidoNN-xxxxx
+        this.PREFIX_PATTERN = /^[a-z]+-[a-z]+\d+-[a-z0-9]{5}$/; // nombre-apellidoN(N)-xxxxx
         this.prefix = this.loadPrefix();
         this.modal = null;
     }
