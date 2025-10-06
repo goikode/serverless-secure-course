@@ -335,10 +335,18 @@
 - <strong>5XXError</strong>: Errores de servidor (500, 502, etc.)<br />
 - <strong>Latency</strong>: Tiempo de respuesta</p>
 <hr />
-<h2 id="anadir-una-api-key-avanzado-opcional">🔐 Añadir una API Key (Avanzado - Opcional)</h2>
-<p>HTTP API no soporta API Keys directamente (solo REST API), pero puedes usar un <strong>Lambda Authorizer</strong> custom o migrar a REST API.</p>
-<p>Para este ejemplo, lo dejaremos sin autenticación (API pública).</p>
-<p>En el <strong>Módulo 2 (Pentesting)</strong> veremos por qué esto es inseguro 😈</p>
+<h2 id="nota-sobre-seguridad-y-autenticacion">🔐 Nota sobre Seguridad y Autenticación</h2>
+<p>Para este ejercicio introductorio, hemos creado una <strong>API pública sin autenticación</strong>. Esto significa que cualquier persona con la URL puede acceder al catálogo.</p>
+<p><strong>¿Por qué no agregamos seguridad ahora?</strong><br />
+- <strong>Módulo 2 (Pentesting)</strong>: Veremos por qué las APIs públicas son vulnerables 😈<br />
+- <strong>Módulo 3 (Securización)</strong>: Implementaremos autenticación y autorización adecuadas:<br />
+  - API Keys (REST API)<br />
+  - Lambda Authorizers<br />
+  - AWS Cognito<br />
+  - IAM Authorization</p>
+<blockquote>
+<p>ℹ️ <strong>HTTP API vs REST API</strong>: HTTP API es más simple y económico, pero REST API tiene más features de seguridad (API Keys, WAF, etc.). En módulos posteriores exploraremos ambas opciones.</p>
+</blockquote>
 <hr />
 <h2 id="ejercicios-opcional">🧪 Ejercicios (Opcional)</h2>
 <ol>
@@ -419,7 +427,7 @@
 ❌ <strong>Autorización</strong>: No hay control de permisos<br />
 ❌ <strong>Validación de entrada</strong>: No se validan los datos<br />
 ❌ <strong>Rate limiting</strong>: Sin protección contra abuso<br />
-❌ <strong>Monitorización</strong>: Solo logs básicos<br />
+❌ <strong>Monitorización avanzada</strong>: Solo logs de Lambda (API Gateway logs requieren configuración adicional con IaC)<br />
 ❌ <strong>Securización</strong>: Muchas vulnerabilidades</p>
 <p>En el <strong>Módulo 2 (Pentesting)</strong> atacaremos esta API 🔓<br />
 En el <strong>Módulo 3 (Securización)</strong> la protegeremos 🔒</p>
