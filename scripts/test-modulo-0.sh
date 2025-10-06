@@ -9,7 +9,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-MODULE_BRANCH="modulo-0-configuracion-entorno"
+MODULE_BRANCH="modulo-0"
 
 # Preferimos workspace dentro de Cloud9 default: ~/environment/mi-workspace-ssc
 if [ -d "$HOME/environment" ]; then
