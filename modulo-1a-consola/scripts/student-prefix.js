@@ -8,7 +8,7 @@
 class StudentPrefixManager {
     constructor() {
         this.STORAGE_KEY = 'ssc_student_prefix';
-        this.PREFIX_PATTERN = /^[a-z]+-[a-z]+-[a-z0-9]{5}$/; // nombre-apellido-xxxxx
+        this.PREFIX_PATTERN = /^[a-z]+-[a-z]+\d{2}-[a-z0-9]{5}$/; // nombre-apellidoNN-xxxxx
         this.prefix = this.loadPrefix();
         this.modal = null;
     }
@@ -47,7 +47,7 @@ class StudentPrefixManager {
         prefix = prefix.trim().toLowerCase();
 
         if (!this.PREFIX_PATTERN.test(prefix)) {
-            return 'Formato incorrecto. Debe ser: nombre-apellido-xxxxx (ej: juan-perez-a7b3f)';
+            return 'Formato incorrecto. Debe ser: nombre-apellidoNN-xxxxx (ej: jorge-fernandes01-vty3n)';
         }
 
         return null; // Valid
@@ -140,8 +140,8 @@ class StudentPrefixManager {
                         introduce el prefijo único que te fue asignado.
                     </p>
                     <p class="format-example">
-                        <strong>Formato:</strong> <code>nombre-apellido-xxxxx</code><br>
-                        <strong>Ejemplo:</strong> <code>juan-perez-a7b3f</code>
+                        <strong>Formato:</strong> <code>nombre-apellidoNN-xxxxx</code><br>
+                        <strong>Ejemplo:</strong> <code>jorge-fernandes01-vty3n</code>
                     </p>
                     <input
                         type="text"
